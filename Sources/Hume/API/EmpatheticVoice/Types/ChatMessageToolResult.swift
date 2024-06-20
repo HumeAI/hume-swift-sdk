@@ -26,7 +26,7 @@ public enum ChatMessageToolResult: Codable {
         case "tool_error":
             self = .toolErrorMessage(try ToolErrorMessage(from: decoder))
         default:
-            throw HumeError.invalidType(type)
+            throw HumeError(message: type)
         }
     }
     

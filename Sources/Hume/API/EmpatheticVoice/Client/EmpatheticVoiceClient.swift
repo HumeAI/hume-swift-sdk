@@ -16,10 +16,20 @@ public class EmpatheticVoice {
         self.options = options
     }
     
-    public lazy var chat: Chat = { Chat(options: options) }()
+    public lazy var chat: Chat = {
+        return Chat(options: options)
+    }()
     
-    public lazy var chats: Chats = { Chats() }()
+    public lazy var chats: Chats = {
+        return Chats()
+    }()
     
-    public lazy var tools: Tools = { Tools() }()
+    public lazy var tools: Tools = {
+        return Tools()
+    }()
+    
+    public lazy var configs: Configs = {
+        return Configs(options: options)
+    }()
 
 }
