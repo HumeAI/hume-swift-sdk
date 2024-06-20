@@ -18,6 +18,7 @@ public struct ReturnConfig: Codable {
         case modifiedOn = "modified_on"
         case prompt = "prompt"
         case voice = "voice"
+        case languageModel = "language_model"
         case tools = "tools"
         case builtinTools = "builtin_tools"
     }
@@ -30,10 +31,11 @@ public struct ReturnConfig: Codable {
     let modifiedOn: Int?
     let prompt: ReturnPrompt?
     let voice: ReturnVoice?
+    let languageModel: ReturnLanguageModel?
     let tools: [ReturnUserDefinedTool?]?
     let builtinTools: [ReturnBuiltinTool?]?
     
-    public init(id: String? = nil, version: Int? = nil, versionDescription: String? = nil, name: String? = nil, createdOn: Int? = nil, modifiedOn: Int? = nil, prompt: ReturnPrompt? = nil, voice: ReturnVoice? = nil, tools: [ReturnUserDefinedTool?]? = nil, builtinTools: [ReturnBuiltinTool?]? = nil) {
+    public init(id: String? = nil, version: Int? = nil, versionDescription: String? = nil, name: String? = nil, createdOn: Int? = nil, modifiedOn: Int? = nil, prompt: ReturnPrompt? = nil, voice: ReturnVoice? = nil, languageModel: ReturnLanguageModel? = nil, tools: [ReturnUserDefinedTool?]? = nil, builtinTools: [ReturnBuiltinTool?]? = nil) {
         self.id = id
         self.version = version
         self.versionDescription = versionDescription
@@ -42,6 +44,7 @@ public struct ReturnConfig: Codable {
         self.modifiedOn = modifiedOn
         self.prompt = prompt
         self.voice = voice
+        self.languageModel = languageModel
         self.tools = tools
         self.builtinTools = builtinTools
     }

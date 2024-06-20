@@ -22,9 +22,9 @@ API reference documentation is available [here](https://dev.hume.ai/reference/).
 Add to your `Package.swift`
 
 ```
-    dependencies: [
-        .package(url: "https://github.com/HumeAI/hume-swift-sdk.git", from: "x.x.x")
-    ]
+dependencies: [
+    .package(url: "https://github.com/HumeAI/hume-swift-sdk.git", from: "x.x.x")
+]
 ```
 
 ## Usage
@@ -38,12 +38,12 @@ import Hume
 
 let voiceProvider = VoiceProvider(
     apiKey: "YOUR_API_KEY",
-    clientSecret: "YOUR_CLIENT_SECRET")
+    clientSecret: "YOUR_CLIENT_SECRET"
+)
 
 voiceProvider.onMessage = { event in
     // Optional handling of the SubscribeEvent. Maybe render in a List
 }
-
 
 // Request permission to record audio. Be sure to add `Privacy - Microphone Usage Description`
 // to your Info.plist
@@ -54,7 +54,6 @@ AVAudioApplication.requestRecordPermission { granted in
         }
     }   
 }
-
 
 // Sending user text input
 await self.voiceProvider.sendUserInput(message: "Hey, how are you?")
@@ -82,6 +81,49 @@ let socket = try await self.humeClient.empatheticVoice.chat
     )
 
 await socket?.sendTextInput(text: "message")
+```
+
+The SDK provides apis for [Configs]("https://dev.hume.ai/reference/empathic-voice-interface-evi/configs") endpoints.
+
+```swift
+let listConfigs = try await self.client.empatheticVoice.configs.listConfigs()
+
+let createConfig = try await self.client.empatheticVoice.configs.createConfig(
+    name: "name"
+)
+
+let listConfigVersions = try await self.client.empatheticVoice.configs.listConfigVersions(
+    id: "id"
+)
+
+let createConfigVersion = try await self.client.empatheticVoice.configs.createConfigVersion(
+    id: "id"
+)
+
+try await self.client.empatheticVoice.configs.deleteConfig(
+    id: "id"
+)
+
+try await self.client.empatheticVoice.configs.updateConfigName(
+    id: "id", 
+    name: "string"
+)
+
+let getConfigVersion = try await self.client.empatheticVoice.configs.getConfigVersion(
+    id: "id", 
+    version: 1
+)
+
+try await self.client.empatheticVoice.configs.deleteConfigVersion(
+    id: "id", 
+    version: 1
+)
+
+let updatedDescriptionRes = try await self.client.empatheticVoice.configs.updateConfigDescription(
+    id: "id", 
+    version: 1, 
+    versionDescription: "version_description"
+)
 ```
 
 ## Beta Status
