@@ -17,7 +17,8 @@ final class AudioOutputTest: XCTestCase {
         {
            "type": "audio_output",
            "id": "1f32aed9948045578e0c1756ccc23fa6",
-           "data": "base_64_encoded_audio"
+           "data": "base_64_encoded_audio",
+           "index": 0
         }
         """
         

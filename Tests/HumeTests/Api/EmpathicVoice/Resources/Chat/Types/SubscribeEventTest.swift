@@ -26,7 +26,8 @@ final class SubscribeEventTest: XCTestCase {
               "begin": 278,
               "end": 278
            },
-           "from_text": true
+           "from_text": true,
+           "interim": false
         }
         """
         
