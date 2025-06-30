@@ -32,8 +32,7 @@ public class Chat: NSObject {
         self.onClose = onClose
         self.onError = onError
         
-        // TODO: make host configurable
-        let host: String = "api.hume.ai"
+        let host: String = SDKConfiguration.default.host
         
         var components = URLComponents(string: "wss://\(host)/v0/evi/chat")
         let accessToken = try await AccessTokenResolver.resolve(options: options)

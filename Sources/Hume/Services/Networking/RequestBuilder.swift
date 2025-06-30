@@ -22,7 +22,7 @@ class RequestBuilder {
 
     init(baseURL: URL) {
         self.baseURL = baseURL
-        self.jsonEncoder = JSONEncoder()
+        self.jsonEncoder = Defaults.encoder
         jsonEncoder.outputFormatting = [.withoutEscapingSlashes]
     }
     

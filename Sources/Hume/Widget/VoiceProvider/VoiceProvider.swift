@@ -10,7 +10,7 @@ public class VoiceProvider: VoiceProvidable {
     
     private let humeClient: HumeClient
     private var socket: StreamSocket?
-    private let delegateQueue = DispatchQueue(label: "com.humeai-sdk.delegate.queue", qos: .userInteractive)
+    private let delegateQueue = DispatchQueue(label: "\(Constants.Namespace).delegate.queue", qos: .userInteractive)
     private var eventSubscription: Task<(), any Error>?
     
     private var audioHub: AudioHub = AudioHubImpl()

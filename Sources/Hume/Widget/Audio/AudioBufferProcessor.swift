@@ -9,7 +9,7 @@ import AVFoundation
 import Accelerate
 
 class AudioBufferProcessor {
-    static private let queue = DispatchQueue(label: "com.humeai-sdk.audioBufferProcessor", qos: .userInteractive)
+    static private let queue = DispatchQueue(label: "\(Constants.Namespace).audioBufferProcessor", qos: .userInteractive)
     
     static func process(buffer: AVAudioPCMBuffer, isMuted: Bool, handler: @escaping MicrophoneDataChunkBlock) {
         queue.async {

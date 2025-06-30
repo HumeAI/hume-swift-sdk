@@ -11,7 +11,7 @@ class MeteredAudioSourceNode {
     var sourceNode: AVAudioSourceNode!
     var meterListener: ((Float) -> Void)?
     private var meterTable: [Float] = []
-    private let meterUpdateQueue = DispatchQueue(label: "com.humeai-sdk.audioOutput.metering", qos: .userInteractive)
+    private let meterUpdateQueue = DispatchQueue(label: "\(Constants.Namespace).audioOutput.metering", qos: .userInteractive)
     
     var isMetering = true
     

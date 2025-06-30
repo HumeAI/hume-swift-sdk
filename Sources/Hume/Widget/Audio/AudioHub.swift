@@ -51,7 +51,7 @@ public protocol AudioHubDelegate {
 
 public class AudioHubImpl: AudioHub {
     // MARK: Audio gear
-    private let audioEngine = AVAudioEngine()
+    internal let audioEngine = AVAudioEngine()
     private let audioSession = AudioSession.shared
     private var soundPlayer: SoundPlayer? {
         didSet {
@@ -62,7 +62,7 @@ public class AudioHubImpl: AudioHub {
     }
     private var microphone: Microphone!
     private var inputNode: AVAudioInputNode!
-    private var mainMixer: AVAudioMixerNode!
+    internal var mainMixer: AVAudioMixerNode!
     private var outputNode: AVAudioOutputNode!
     
     public var microphoneMode: MicrophoneMode {
@@ -106,7 +106,7 @@ public class AudioHubImpl: AudioHub {
     public var stateSubject = CurrentValueSubject<AudioHubState, Never>(.unconfigured)
     
     // MARK: Queues
-    private let microphoneQueue = DispatchQueue(label: "com.humeai-sdk.microphone.queue")
+    private let microphoneQueue = DispatchQueue(label: "\(Constants.Namespace).microphone.queue")
     
     // MARK: Handlers
     public var microphoneDataChunkHandler: MicrophoneDataChunkBlock?
@@ -227,7 +227,7 @@ public class AudioHubImpl: AudioHub {
             Logger.error("Failed to create input format for sound player")
             return
         }
-        soundPlayer = SoundPlayer(inputFormat: inputFormat, outputFormat: outputNode.outputFormat(forBus: 0))
+        soundPlayer = SoundPlayer(inputFormat: inputFormat)
         
         guard let soundPlayer else {
             Logger.error("Sound player is not initialized")

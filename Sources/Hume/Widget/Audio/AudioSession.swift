@@ -65,6 +65,9 @@ class AudioSession {
     @Published var isDeviceSpeakerActive: Bool = false
     weak var delegate: (any AudioSessionDelegate)? = nil
 
+    // Track observer registration
+    private var observersRegistered = false
+
     func start(for configuration: AudioSession.Configuration) throws {
         Logger.debug("Starting audio session for config: \(configuration)")
         try updateCategory(config: configuration)
@@ -107,24 +110,25 @@ class AudioSession {
     }
     
     private func registerAVObservers() {
+        guard !observersRegistered else { return }
         NotificationCenter.default.addObserver(self,
                                                selector: #selector(handleInterruption),
                                                name: AVAudioSession.interruptionNotification,
                                                object: nil)
-        
         NotificationCenter.default.addObserver(self,
                                                selector: #selector(handleRouteChange),
                                                name: AVAudioSession.routeChangeNotification,
                                                object: nil)
-        
         NotificationCenter.default.addObserver(self,
                                                selector: #selector(handleConfigurationChange),
                                                name: .AVAudioEngineConfigurationChange,
                                                object: nil)
+        observersRegistered = true
     }
     
     private func unregisterAVObservers() {
         NotificationCenter.default.removeObserver(self)
+        observersRegistered = false
     }
     
     // MARK: - Audio Routing

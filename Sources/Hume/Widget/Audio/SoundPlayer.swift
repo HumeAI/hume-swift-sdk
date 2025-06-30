@@ -16,7 +16,7 @@ public class SoundPlayer {
         rawAudioPlayer.sourceNode
     }
 
-    init(inputFormat: AVAudioFormat, outputFormat: AVAudioFormat) {
+    init(inputFormat: AVAudioFormat) {
         self.rawAudioPlayer = RawAudioPlayer(format: inputFormat)!
         Logger.info("Initializing SoundPlayer with RawAudioPlayer")
     }
@@ -39,7 +39,7 @@ public class SoundPlayer {
 private class RawAudioPlayer {
     var sourceNode: MeteredAudioSourceNode!
     fileprivate var audioQueue: [Data] = []
-    private let syncQueue = DispatchQueue(label: "com.humeai-sdk.audioOutput.queue")
+    private let syncQueue = DispatchQueue(label: "\(Constants.Namespace).audioOutput.queue")
     private let format: AVAudioFormat
 
     // Fade-in/out config
