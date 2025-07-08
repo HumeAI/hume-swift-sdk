@@ -10,6 +10,7 @@ import Foundation
 /// `NetworkingServiceSession` serves as an interface to create light wrappers around making network requests. By abstracting out the connection layer,
 /// it enables us to isolate the Networking logic for testing
 protocol NetworkingServiceSession {
+    var session: URLSession { get }
     /// Submit a request and returns the retrieved data
     func data(
         for request: URLRequest,
@@ -24,7 +25,7 @@ protocol NetworkingServiceSession {
 
 /// `URLNetworkingSession` is the default implementation of `NetworkingServiceSession`. This uses the standard `URLSession` and enables it with a configurable `URLCache`
 struct URLNetworkingSession: NetworkingServiceSession {
-    private let session: URLSession
+    let session: URLSession
     private let urlCache: URLCache
     
     init(memoryCapacity: Int = Constants.Networking.URLCacheMemoryCapacity, diskCapacity: Int = Constants.Networking.URLCacheDiskCapacity) {

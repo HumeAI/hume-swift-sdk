@@ -21,6 +21,7 @@ extension Data {
     }
 }
 
+// MARK: - Audio Extensions
 extension Data {
     func parseWAVHeader() -> WAVHeader? {
         guard count >= 44 else { return nil }
@@ -38,7 +39,7 @@ extension Data {
             return subdata(in: offset..<offset+4).withUnsafeBytes { $0.load(as: UInt32.self) }
         }
         
-        return WAVHeader(
+        let header = WAVHeader(
             chunkID: readString(0, 4),
             format: readString(8, 4),
             subchunk1ID: readString(12, 4),
@@ -49,5 +50,10 @@ extension Data {
             blockAlign: readUInt16(32),
             bitsPerSample: readUInt16(34)
         )
+        if header.isValid {
+            Logger.debug("Header: \(header)")
+            return header
+        }
+        return nil
     }
 }

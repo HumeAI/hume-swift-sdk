@@ -2,51 +2,6 @@ import AVFAudio
 import Combine
 import Foundation
 
-public enum AudioFormat {
-    case PCM_16BIT
-    
-    var commonFormat: AVAudioCommonFormat {
-        switch self {
-        case .PCM_16BIT: return .pcmFormatInt16
-        }
-    }
-    
-    var encoding: Encoding {
-        switch self {
-        case .PCM_16BIT: return .linear16
-        }
-    }
-    
-    var description: String {
-        switch self {
-        case .PCM_16BIT: return "16-bit PCM"
-        }
-    }
-}
-
-enum AudioSessionError: Error {
-    case noAvailableDevices
-    case multipleOutputRoutes
-    case unsupportedConfiguration(reason: String)
-
-    var errorDescription: String? {
-        switch self {
-        case .noAvailableDevices:
-            return "No available input or output devices in the current session."
-        case .multipleOutputRoutes:
-            return "Invalid output configuration: multiple or no output routes found."
-        case .unsupportedConfiguration(let reason):
-            return "Unsupported configuration: \(reason)"
-        }
-    }
-}
-
-
-struct AudioSessionIO {
-    var input: AVAudioSessionPortDescription
-    var output: AVAudioSessionPortDescription
-}
-
 protocol AudioSessionDelegate: AnyObject {
     func audioEngineDidChangeConfiguration()
 }
@@ -57,51 +12,57 @@ class AudioSession {
     
     static let shared = AudioSession()
     
-    /// Keeps track of configs for audio session. This is used to restore
-    /// a past configuration if we start another one during an active session.
-    /// The specific case this was added for is when we're in an active call, and the user wants to edit the voice, we need to enable the sample player momentarily
-    private var activeConfig: Configuration? = nil
-    
+    private var activeConfig: AudioHubConfiguration? = nil
+
     @Published var isDeviceSpeakerActive: Bool = false
     weak var delegate: (any AudioSessionDelegate)? = nil
 
     // Track observer registration
     private var observersRegistered = false
 
-    func start(for configuration: AudioSession.Configuration) throws {
-        Logger.debug("Starting audio session for config: \(configuration)")
-        try updateCategory(config: configuration)
+    func start() throws {
+        guard activeConfig != nil else {
+            throw AudioSessionError.unconfigured
+        }
         try audioSession.setActive(true)
-        activeConfig = configuration
         try handleAudioRouting()
         Logger.debug("Starting audio engine")
     }
     
-    func stop(configuration: AudioSession.Configuration) throws {
-        guard activeConfig == configuration else {
-            return
-        }
-        
-        activeConfig = nil
+    func stop() throws {
         try audioSession.setActive(false, options: [.notifyOthersOnDeactivation])
     }
     
     // MARK: Configuring
-    func configure() throws {
-        Logger.info("Configuring audio session")
+    func configure(with configuration: AudioHubConfiguration) throws {
+        Logger.info("Configuring audio session with \(configuration)")
+        guard activeConfig != configuration else {
+            Logger.warn("Audio session already configured for \(configuration).")
+            return
+        }
+        activeConfig = configuration
 
         do {
-            try audioSession.setPreferredIOBufferDuration(Constants.InputBufferDuration)  //20 ms as per EVI docs
-            try audioSession.setPreferredSampleRate(Constants.SampleRate)
+            switch configuration {
+            case .voiceChat:
+                try audioSession.setPreferredIOBufferDuration(Constants.InputBufferDuration)  //20 ms as per EVI docs
+                try audioSession.setPreferredSampleRate(Constants.SampleRate)
+            case .tts:
+                break
+            }
             
+            try updateCategory(config: configuration)
             registerAVObservers()
             Logger.info("Audio session configured successfully")
+        } catch let error as AudioSessionError {
+            throw error
         } catch {
+            Logger.error("Failed to configure audio session", error)
             throw AudioSessionError.unsupportedConfiguration(reason: "Failed to configure audio session")
         }
     }
     
-    private func updateCategory(config: Configuration) throws {
+    private func updateCategory(config: AudioHubConfiguration) throws {
         let (category, mode, options) = (config.category, config.mode, config.options)
         guard AVAudioSession.sharedInstance().availableCategories.contains(category) else {
             throw AudioSessionError.unsupportedConfiguration(reason: "\(category) is not supported.")
@@ -133,7 +94,8 @@ class AudioSession {
     
     // MARK: - Audio Routing
     private func overrideReceiverIfNeeded(ioConfig: AudioSessionIO) throws {
-        if ioConfig.output.portType == .builtInReceiver || ioConfig.output.portType == .builtInSpeaker {
+        let defaultToSpeaker = activeConfig?.options.contains(.defaultToSpeaker) ?? false
+        if (ioConfig.output.portType == .builtInReceiver || ioConfig.output.portType == .builtInSpeaker) && defaultToSpeaker {
             Logger.info("Overriding to speaker output")
             try audioSession.overrideOutputAudioPort(.speaker)
             self.isDeviceSpeakerActive = true

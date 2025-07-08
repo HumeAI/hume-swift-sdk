@@ -9,10 +9,13 @@ import Foundation
 
 public struct SoundClip {
     public let id: String
-    public let index: Int
+    public var index: Int? = nil
     public let audioData: Data
     public let header: WAVHeader?
-    
+}
+
+// MARK: - Convenient initializers
+extension SoundClip {
     public static func from(_ audioOutput: AudioOutput) -> SoundClip? {
         guard let audioData = audioOutput.asBase64EncodedData else {
             return nil
@@ -23,16 +26,40 @@ public struct SoundClip {
                     audioData: audioData,
                          header: audioData.parseWAVHeader())
     }
-}
-
-public struct WAVHeader {
-    let chunkID: String
-    let format: String
-    let subchunk1ID: String
-    let audioFormat: UInt16
-    let numChannels: UInt16
-    let sampleRate: UInt32
-    let byteRate: UInt32
-    let blockAlign: UInt16
-    let bitsPerSample: UInt16
+    
+    public static func from(_ returnGeneration: ReturnGeneration) -> SoundClip? {
+        guard let audioData = Data(base64Encoded: returnGeneration.audio) else {
+            return nil
+        }
+        
+        return SoundClip(id: returnGeneration.generationId,
+                         audioData: audioData,
+                         header: audioData.parseWAVHeader())
+    }
+    
+    public static func from(_ snippet: Snippet) -> SoundClip? {
+        guard let audioData = Data(base64Encoded: snippet.audio) else {
+            return nil
+        }
+        
+        return SoundClip(id: snippet.generationId,
+                         audioData: audioData,
+                         header: audioData.parseWAVHeader())
+    }
+    
+    public static func from(_ snippetAudioChunk: SnippetAudioChunk) -> SoundClip? {
+        guard let audioData = Data(base64Encoded: snippetAudioChunk.audio) else {
+            return nil
+        }
+        
+        return SoundClip(id: UUID().uuidString,
+                         audioData: audioData,
+                         header: audioData.isEmpty ? nil : audioData.parseWAVHeader())
+    }
+    
+    public static func from(_ data: Data) -> SoundClip? {
+        return SoundClip(id: UUID().uuidString,
+                         audioData: data,
+                         header: data.parseWAVHeader())
+    }
 }

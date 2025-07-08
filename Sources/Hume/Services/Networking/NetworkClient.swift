@@ -71,7 +71,7 @@ class NetworkClientImpl: NetworkClient {
     }
     
     func stream<Response: NetworkClientResponse>(_ endpoint: Endpoint<Response>, customTokenProvider: TokenProvider? = nil) -> AsyncThrowingStream<Response, Error> {
-        AsyncThrowingStream { continuation in
+        return AsyncThrowingStream { continuation in
             Task {
                 do {
                     // Build URLRequest
@@ -80,17 +80,24 @@ class NetworkClientImpl: NetworkClient {
                     builder = builder.setTimeout(endpoint.timeoutDuration)
                     let request = try builder.build()
 
-                    // Stream raw bytes using networkingService
+                    var buffer = Data()
+
                     for try await chunk in networkingService.streamData(for: request) {
                         if Response.self == Data.self {
                             continuation.yield(chunk as! Response)
                         } else {
-                            let decoded = try Defaults.decoder.decode(Response.self, from: chunk)
-                            continuation.yield(decoded)
+                            buffer.append(chunk)
+                                while let range = buffer.range(of: Data([UInt8(ascii: "\n")])) {
+                                    let jsonData = buffer.subdata(in: 0..<range.lowerBound)
+                                    buffer.removeSubrange(0...range.lowerBound)
+                                    let decoded = try Defaults.decoder.decode(Response.self, from: jsonData)
+                                    continuation.yield(decoded)
+                                }
                         }
                     }
                     continuation.finish()
                 } catch {
+                    Logger.error("error streaming", error)
                     continuation.finish(throwing: error)
                 }
             }

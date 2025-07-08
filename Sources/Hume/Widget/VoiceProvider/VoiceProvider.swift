@@ -13,7 +13,7 @@ public class VoiceProvider: VoiceProvidable {
     private let delegateQueue = DispatchQueue(label: "\(Constants.Namespace).delegate.queue", qos: .userInteractive)
     private var eventSubscription: Task<(), any Error>?
     
-    private var audioHub: AudioHub = AudioHubImpl()
+    private var audioHub: AudioHub
     private var audioHubStateCancellable: AnyCancellable?
     
     public weak var delegate: (any VoiceProviderDelegate)?
@@ -35,6 +35,10 @@ public class VoiceProvider: VoiceProvidable {
     
     public init(client: HumeClient) {
         self.humeClient = client
+        
+        let hub = AudioHubImpl()
+        hub.isCrossfadeEnabled = true
+        self.audioHub = hub 
     }
     
     deinit {
@@ -60,7 +64,7 @@ public class VoiceProvider: VoiceProvidable {
         stateSubject.send(.connecting)
         audioHub.microphoneDataChunkHandler = handleMicrophoneData(_:averagePower:)
         if audioHub.stateSubject.value == .unconfigured {
-            try await audioHub.configure()
+            try await audioHub.configure(with: .voiceChat)
         }
         
         var defaultedSessionSettings: SessionSettings? = nil
@@ -191,7 +195,7 @@ extension VoiceProvider {
                     do {
                         Logger.info("Waiting for events on socket")
                         for try await event in socket.receive() {
-                            self.handleIncomingEvent(event)
+                            try self.handleIncomingEvent(event)
                         }
                     } catch let error as StreamSocketError {
                         switch error {
@@ -213,14 +217,14 @@ extension VoiceProvider {
     }
 
     /// Handles individual incoming events
-    private func handleIncomingEvent(_ event: SubscribeEvent) {
+    private func handleIncomingEvent(_ event: SubscribeEvent) throws {
         switch event {
         case .audioOutput(let audioOutput):
             guard let clip = SoundClip.from(audioOutput) else {
                 Logger.error("Failed to decode audio output")
                 return
             }
-            self.audioHub.enqueue(soundClip: clip)
+            try self.audioHub.enqueue(soundClip: clip)
             self.delegateQueue.async {
                 self.delegate?.voiceProvider(self, didPlayClip: clip)
             }

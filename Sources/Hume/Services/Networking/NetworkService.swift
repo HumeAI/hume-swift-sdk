@@ -22,10 +22,12 @@ class NetworkingServiceImpl: NSObject, NetworkingService {
     private let decoder: JSONDecoder
     
     private var delegate: URLSessionDelegate?
+    private var streamingClient: NetworkStreamingClient
     
     init(session: NetworkingServiceSession, decoder: JSONDecoder = Defaults.decoder) {
         self.session = session
         self.decoder = decoder
+        self.streamingClient = NetworkStreamingClient()
         super.init()
     }
     
@@ -73,7 +75,7 @@ class NetworkingServiceImpl: NSObject, NetworkingService {
                 if data.isEmpty && Response.self == EmptyResponse.self {
                     // kinda hacky way to return a typed response when theres no data to decode
                     Logger.debug("Recevied empty response for (\(request.url?.absoluteString ?? ""))")
-
+                    
                     return EmptyResponse() as! Response
                 } else if Response.self == Data.self {
                     // special case for returning raw data
@@ -111,37 +113,29 @@ class NetworkingServiceImpl: NSObject, NetworkingService {
         
         return try await processResponse(data: data, response: response, request: request)
     }
-
+    
     func streamData(for request: URLRequest) -> AsyncThrowingStream<Data, Error> {
-        AsyncThrowingStream { continuation in
-            Task {
-                do {
-                    let (byteStream, response) = try await URLSession.shared.bytes(for: request)
-                    guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
-                        throw URLError(.badServerResponse)
+        Logger.debug("stream data for: \(request)")
+        return AsyncThrowingStream<Data, Error> { continuation in
+            // Start streaming
+            streamingClient.startStreaming(
+                request: request,
+                onData: { data in
+                    if let data {
+                        continuation.yield(data)
                     }
-
-                    var dataBuffer = Data()
-                    for try await byte in byteStream {
-                        dataBuffer.append(byte)
-                        
-                        // Yield the data buffer when it reaches a certain size
-                        if dataBuffer.count >= 1024 {
-                            continuation.yield(dataBuffer)
-                            dataBuffer = Data()
-                        }
+                },
+                onResponse: { response in
+                    Logger.debug("stream response: \(response)")
+                },
+                onComplete: { error in
+                    if let error = error {
+                        continuation.finish(throwing: error)
+                    } else {
+                        continuation.finish()
                     }
-
-                    // Yield any remaining data in the buffer
-                    if !dataBuffer.isEmpty {
-                        continuation.yield(dataBuffer)
-                    }
-
-                    continuation.finish()
-                } catch {
-                    continuation.finish(throwing: error)
                 }
-            }
+            )
         }
     }
 }
