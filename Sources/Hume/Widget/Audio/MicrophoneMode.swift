@@ -8,8 +8,13 @@
 import AVFoundation
 
 public struct MicrophoneMode {
-    let preferredMode: AVCaptureDevice.MicrophoneMode
-    let activeMode: AVCaptureDevice.MicrophoneMode
+    public let preferredMode: AVCaptureDevice.MicrophoneMode
+    public let activeMode: AVCaptureDevice.MicrophoneMode
+    
+    package init(preferredMode: AVCaptureDevice.MicrophoneMode, activeMode: AVCaptureDevice.MicrophoneMode) {
+        self.preferredMode = preferredMode
+        self.activeMode = activeMode
+    }
 }
 
 extension AVCaptureDevice.MicrophoneMode {

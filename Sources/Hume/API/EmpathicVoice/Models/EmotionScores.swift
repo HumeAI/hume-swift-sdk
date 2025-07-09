@@ -12,7 +12,7 @@ public struct ExpressionMeasurement {
     public let name: String
     public let value: Double
     
-    init(_ name: String, _ value: Double) {
+    package init(_ name: String, _ value: Double) {
         self.name = name
         self.value = value
     }

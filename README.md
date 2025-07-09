@@ -61,3 +61,8 @@ Implement `VoiceProviderDelegate` methods to be notified of events, errors, mete
 This SDK is in beta, and there may be breaking changes between versions without a major 
 version update. Therefore, we recommend pinning the package version to a specific version. 
 This way, you can install the same version each time without breaking changes.
+
+### Known Issues and Limitations
+- Audio interruptions (e.g. phone calls) are not yet handled.
+- Manually starting/stopping `AVAudioSession` will likely break an active voice session.
+- Input metering is not yet implemented.
