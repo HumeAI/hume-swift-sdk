@@ -14,5 +14,10 @@ public struct AssistantProsodyMessage: Codable {
     /** Inference model results. */
     public let models: Inference
     public let type: String
-    
+
+    public init(id: String, models: Inference, type: String) {
+        self.id = id
+        self.models = models
+        self.type = type
+    }
 }
