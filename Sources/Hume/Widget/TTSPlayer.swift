@@ -30,7 +30,6 @@ public class TTSPlayerImpl: TTSPlayer {
             try await prepare()
         }
         
-        audioHub.isCrossfadeEnabled = false
         try await playFileStream(for: request)
     }
     
@@ -55,7 +54,7 @@ public class TTSPlayerImpl: TTSPlayer {
                 Logger.warn("failed to create sound clip")
                 return
             }
-            try audioHub.enqueue(soundClip: soundClip)
+            try await audioHub.enqueue(soundClip: soundClip)
             
         }
     }

@@ -14,6 +14,18 @@ public struct SoundClip {
     public let header: WAVHeader?
 }
 
+// MARK: - Headers
+extension SoundClip {
+    /// Returns the audio data without the 44-byte WAV header if present, otherwise returns self.
+    func headerlessData() -> Data {
+        guard header != nil else {
+            return audioData
+        }
+        // Remove the 44-byte header
+        return audioData.subdata(in: 44..<audioData.count)
+    }
+}
+
 // MARK: - Convenient initializers
 extension SoundClip {
     public static func from(_ audioOutput: AudioOutput) -> SoundClip? {

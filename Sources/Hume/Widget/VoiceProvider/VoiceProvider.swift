@@ -13,7 +13,7 @@ public class VoiceProvider: VoiceProvidable {
     private let delegateQueue = DispatchQueue(label: "\(Constants.Namespace).delegate.queue", qos: .userInteractive)
     private var eventSubscription: Task<(), any Error>?
     
-    private var audioHub: AudioHub
+    private var audioHub: AudioHub = AudioHubImpl()
     private var audioHubStateCancellable: AnyCancellable?
     
     public weak var delegate: (any VoiceProviderDelegate)?
@@ -35,10 +35,6 @@ public class VoiceProvider: VoiceProvidable {
     
     public init(client: HumeClient) {
         self.humeClient = client
-        
-        let hub = AudioHubImpl()
-        hub.isCrossfadeEnabled = true
-        self.audioHub = hub 
     }
     
     deinit {
@@ -224,9 +220,23 @@ extension VoiceProvider {
                 Logger.error("Failed to decode audio output")
                 return
             }
-            try self.audioHub.enqueue(soundClip: clip)
-            self.delegateQueue.async {
-                self.delegate?.voiceProvider(self, didPlayClip: clip)
+            Task {
+                do {
+                    try await self.audioHub.enqueue(soundClip: clip)
+                    self.delegateQueue.async {
+                        self.delegate?.voiceProvider(self, didPlayClip: clip)
+                    }
+                } catch let error as AudioHubError {
+                    Logger.warn("Failed to enqueue audio output: \(error)")
+                    self.delegateQueue.async {
+                        self.delegate?.voiceProvider(self, didProduceError: .audioHubError(error))
+                    }
+                } catch {
+                    Logger.error("Unknown error while trying to enqueue audio output: \(error)")
+                    self.delegateQueue.async {
+                        self.delegate?.voiceProvider(self, didProduceError: .unknown(error))
+                    }
+                }
             }
         case .userInterruption:
             self.audioHub.handleInterruption()

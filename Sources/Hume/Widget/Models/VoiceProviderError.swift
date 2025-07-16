@@ -23,6 +23,8 @@ public enum VoiceProviderError: Error {
     case audioHubStopFailure(Error)
     /// Failed to configure the audio hub.
     case audioHubConfigurationFailure(Error)
+    /// AudioHub encountered an error
+    case audioHubError(AudioHubError)
     /// Failed to connect the socket.
     case socketConnectionFailure(Error)
     /// Invalid session settings provided.

@@ -13,13 +13,14 @@ public enum AudioHubError: Error {
     case audioSessionConfigError
     case soundPlayerDecodingError
     case soundPlayerInitializationError
+    case headerMissing
+    case notRunning
     case outputFormatError
 }
 
 public protocol AudioHub {
     var outputMeterListener: ((Float) -> Void)? { get set }
     var isOutputMeteringEnabled: Bool { get set }
-    var isCrossfadeEnabled: Bool { get set }
     
     var microphoneMode: MicrophoneMode { get }
     var microphoneDataChunkHandler: MicrophoneDataChunkBlock? { get set }
@@ -29,7 +30,7 @@ public protocol AudioHub {
 
     func configure(with config: AudioHubConfiguration) async throws
     
-    func enqueue(soundClip: SoundClip) throws
+    func enqueue(soundClip: SoundClip) async throws
     
     func start() async throws
     func stop() async throws
@@ -46,13 +47,7 @@ public class AudioHubImpl: AudioHub {
     // MARK: Audio gear
     internal let audioEngine = AVAudioEngine()
     private let audioSession = AudioSession.shared
-    private var soundPlayer: SoundPlayer? {
-        didSet {
-            if let _pendingOutputMeterEnabled, let soundPlayer {
-                isOutputMeteringEnabled = _pendingOutputMeterEnabled
-            }
-        }
-    }
+    private var soundPlayer: SoundPlayer?
     private var microphone: Microphone!
     private var inputNode: AVAudioInputNode!
     internal var mainMixer: AVAudioMixerNode!
@@ -63,17 +58,11 @@ public class AudioHubImpl: AudioHub {
             preferredMode: AVCaptureDevice.preferredMicrophoneMode,
             activeMode: AVCaptureDevice.activeMicrophoneMode)
     }
-
-    // MARK: Metering
-    // FIXME: hacky solution to a crash when trying to set this when granting mic permissions. hacked because we're releasing beta, lets clean up the state management for this and incoroporate mic permsission handling in the SDK before public release of SDK.
-    private var _pendingOutputMeterEnabled: Bool?
+    
     public var isOutputMeteringEnabled: Bool = false {
         didSet {
             if let soundPlayer {
                 soundPlayer.meteringNode.isMetering = isOutputMeteringEnabled
-                _pendingOutputMeterEnabled = nil
-            } else {
-                _pendingOutputMeterEnabled = isOutputMeteringEnabled
             }
         }
     }
@@ -98,19 +87,12 @@ public class AudioHubImpl: AudioHub {
     @MainActor
     public var stateSubject = CurrentValueSubject<AudioHubState, Never>(.unconfigured)
     
-    /// Sets whether cross fade is enabled on the SoundPlayer's output. Set to true if output pops/clicks between sound clips
-    public var isCrossfadeEnabled: Bool = false {
-        didSet {
-            soundPlayer?.isCrossfadeEnabled = isCrossfadeEnabled
-        }
-    }
-    
     // MARK: Queues
     private let microphoneQueue = DispatchQueue(label: "\(Constants.Namespace).microphone.queue")
     
+    private let configLock = NSLock()
+
     // MARK: Handlers
-    // TODO: move initialization into `start()`. Refactor lifecycle
-    /// When using `voiceChat` as your `AudioHubConfiguration`, this is expected to be set before calling `start`. `stop()` currently unsets this handler.
     public var microphoneDataChunkHandler: MicrophoneDataChunkBlock?
     
     private var activeConfig: AudioHubConfiguration?
@@ -160,17 +142,23 @@ public class AudioHubImpl: AudioHub {
         await stateSubject.send(.stopped)
     }
 
-    public func enqueue(soundClip: SoundClip) throws {
-        Logger.info("Adding message to SoundPlayer: \(soundClip.id) (\(soundClip.index?.description ?? "") ")
-        if soundPlayer == nil {
-            guard let header = soundClip.header else {
-                Logger.error("SoundClip missing header")
-                throw AudioHubError.soundPlayerInitializationError
+    public func enqueue(soundClip: SoundClip) async throws {
+        guard await stateSubject.value == .running else {
+           Logger.warn("skipping enqueue because audio hub is not running")
+            throw AudioHubError.notRunning
+           return
+       }
+        
+        Logger.info("Adding message to SoundPlayer: \(soundClip.id) (\(soundClip.index)")
+        if let header = soundClip.header {
+            if (soundPlayer != nil && UInt32(soundPlayer?.inputFormat.sampleRate ?? 0) != header.sampleRate) || soundPlayer == nil {
+                initializeSoundPlayer(with: header)
             }
-            initializeSoundPlayer(with: header)
+        } else if soundPlayer == nil {
+            Logger.warn("SoundClip missing header, no soundplayer")
         }
+
         guard let soundPlayer else {
-            Logger.error("Missing SoundPlayer")
             throw AudioHubError.soundPlayerInitializationError
         }
         soundPlayer.enqueueAudio(soundClip: soundClip)
@@ -214,9 +202,6 @@ public class AudioHubImpl: AudioHub {
 
         microphoneDataChunkHandler = nil
         soundPlayer?.clearQueue()
-        
-        disconnectAudioGraph()
-        activeConfig = nil
         soundPlayer = nil
         
         if audioEngine.isRunning {
@@ -239,6 +224,12 @@ public class AudioHubImpl: AudioHub {
     // MARK: - Helpers
     private func initializeSoundPlayer(with header: WAVHeader) {
         Logger.info("Initializing sound player with header: \(header)")
+        guard configLock.try() else {
+            Logger.debug("initialization already in progress, skipping")
+            return
+        }
+        defer { configLock.unlock() }
+        
         guard let inputFormat = AVAudioFormat(commonFormat: Constants.DefaultAudioFormat.commonFormat,
                                         sampleRate: Double(header.sampleRate),
                                         channels: AVAudioChannelCount(header.numChannels),
@@ -246,10 +237,11 @@ public class AudioHubImpl: AudioHub {
             Logger.error("Failed to create input format for sound player")
             return
         }
-        soundPlayer = SoundPlayer(inputFormat: inputFormat)
-        soundPlayer?.isCrossfadeEnabled = isCrossfadeEnabled
+        soundPlayer = SoundPlayer(inputFormat: inputFormat, outputFormat: outputNode.outputFormat(forBus: 0))
+        soundPlayer?.meteringNode.isMetering = isOutputMeteringEnabled
+        soundPlayer?.meteringNode.meterListener = outputMeterListener
         
-        guard let soundPlayer else {
+        guard soundPlayer != nil else {
             Logger.error("Sound player is not initialized")
             return
         }

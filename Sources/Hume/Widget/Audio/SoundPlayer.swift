@@ -8,12 +8,7 @@ import os
 
 public class SoundPlayer {
     private let rawAudioPlayer: RawAudioPlayer
-    
-    var isCrossfadeEnabled: Bool = false {
-        didSet {
-            rawAudioPlayer.isCrossfadeEnabled = isCrossfadeEnabled
-        }
-    }
+    let inputFormat: AVAudioFormat
     
     var audioNode: AVAudioSourceNode {
         rawAudioPlayer.sourceNode.sourceNode
@@ -23,19 +18,15 @@ public class SoundPlayer {
         rawAudioPlayer.sourceNode
     }
 
-    init(inputFormat: AVAudioFormat) {
+    init(inputFormat: AVAudioFormat, outputFormat: AVAudioFormat) {
+        self.inputFormat = inputFormat
         self.rawAudioPlayer = RawAudioPlayer(format: inputFormat)!
         Logger.info("Initializing SoundPlayer with RawAudioPlayer")
     }
 
     func enqueueAudio(soundClip: SoundClip) {
         Logger.info("enqueueAudio called with \(soundClip.audioData.count) bytes of data")
-        rawAudioPlayer.enqueueAudio(data: soundClip.audioData)
-    }
-    
-    func enqueueAudio(data: Data) {
-        Logger.info("enqueueAudioData called with \(data.count) bytes of data")
-        rawAudioPlayer.enqueueAudio(data: data)
+        rawAudioPlayer.enqueueAudio(data: soundClip.headerlessData())
     }
 
     func clearQueue() {
