@@ -209,8 +209,8 @@ public class AudioHubImpl: AudioHub {
             audioEngine.stop()
         }
         
-        try audioSession.stop()
         await stateSubject.send(.stopped)
+        try audioSession.stop()
     }
     
     public func muteMic(_ mute: Bool) {
