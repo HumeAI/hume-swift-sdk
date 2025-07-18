@@ -9,11 +9,9 @@ import Foundation
 
 internal struct AccessTokenResolver {
     internal static func resolve(options: HumeClient.Options) async throws -> String {
-        try await {
-            switch options {
-            case .accessToken(let accessToken):
-                return accessToken
-            }
-        }()
+        switch options {
+        case .accessToken(let accessToken):
+            return accessToken
+        }
     }
 }

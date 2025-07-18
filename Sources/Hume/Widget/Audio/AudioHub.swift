@@ -55,7 +55,7 @@ public class AudioHubImpl: AudioHub {
     private let audioSession = AudioSession.shared
     private var soundPlayer: SoundPlayer? {
         didSet {
-            if let _pendingOutputMeterEnabled, let soundPlayer {
+            if let _pendingOutputMeterEnabled, let _ = soundPlayer {
                 isOutputMeteringEnabled = _pendingOutputMeterEnabled
             }
         }
@@ -229,7 +229,7 @@ public class AudioHubImpl: AudioHub {
         }
         soundPlayer = SoundPlayer(inputFormat: inputFormat, outputFormat: outputNode.outputFormat(forBus: 0))
         
-        guard let soundPlayer else {
+        guard soundPlayer != nil else {
             Logger.error("Sound player is not initialized")
             return
         }

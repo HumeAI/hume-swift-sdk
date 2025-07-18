@@ -7,7 +7,7 @@ Pod::Spec.new do |spec|
                       DESC
 
   spec.homepage     = "https://github.com/HumeAI/hume-swift-sdk"
-  spec.license      = "MIT"
+  spec.license      = { :type => "MIT", :file => "LICENSE" }
   spec.author       = { "Hume AI" => "support@hume.ai" }
 
   spec.source       = { :git => "https://github.com/HumeAI/hume-swift-sdk.git", :tag => "#{spec.version}" }
