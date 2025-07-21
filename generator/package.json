@@ -1,0 +1,19 @@
+{
+  "name": "generator",
+  "module": "generator.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@types/lodash": "^4.17.15",
+    "change-case": "^5.4.4",
+    "lodash": "^4.17.21",
+    "prettier": "^3.4.2",
+    "yaml": "^2.7.0",
+    "zod": "^3.24.1"
+  }
+}
