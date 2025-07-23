@@ -128,9 +128,12 @@ class NetworkClientImpl: NetworkClient {
         var requestBuilder = RequestBuilder(baseURL: baseURL)
             .setPath(endpoint.path)
             .setMethod(endpoint.method)
-            .setQueryParams(endpoint.queryParams ?? [:])
             .setCachePolicy(endpoint.cachePolicy)
             .addHeader(key: "Content-Type", value: "application/json")
+        
+        if let queryParams = endpoint.queryParams {
+            requestBuilder = requestBuilder.setQueryParams(queryParams)
+        }
         
         if let customTokenProvider {
             requestBuilder = try await customTokenProvider().updateRequest(requestBuilder)

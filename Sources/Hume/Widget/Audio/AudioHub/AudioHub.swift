@@ -146,7 +146,6 @@ public class AudioHubImpl: AudioHub {
         guard await stateSubject.value == .running else {
            Logger.warn("skipping enqueue because audio hub is not running")
             throw AudioHubError.notRunning
-           return
        }
         
         Logger.info("Adding message to SoundPlayer: \(soundClip.id) (\(soundClip.index)")

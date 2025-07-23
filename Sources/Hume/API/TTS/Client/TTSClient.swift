@@ -15,5 +15,5 @@ public class TTSClient {
     }
     
     public lazy var tts: TTS = { TTS(networkClient: networkClient) }()
-//    public lazy var voices: Voices = { Voices(options: options) }()
+    public lazy var voices: Voices = { Voices(networkClient: networkClient) }()
 }

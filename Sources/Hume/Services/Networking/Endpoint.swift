@@ -27,7 +27,7 @@ struct Endpoint<Response: NetworkClientResponse> {
     var headers: [String: String]? = nil
     
     /// A dictionary of query parameters to be appended to the URL.
-    let queryParams: [String: String]?
+    let queryParams: [URLQueryItem]?
     
     /// An optional request body conforming to `NetworkClientRequest` (e.g., for POST or PATCH requests).
     let body: (any NetworkClientRequest)?
@@ -55,7 +55,7 @@ struct Endpoint<Response: NetworkClientResponse> {
         path: String,
         method: HTTPMethod = .get,
         headers: [String: String]? = nil,
-        queryParams: [String: String]? = nil,
+        queryParams: [URLQueryItem]? = nil,
         body: (any NetworkClientRequest)? = nil,
         cachePolicy: URLRequest.CachePolicy = .useProtocolCachePolicy,
         timeoutDuration: TimeInterval = 60,

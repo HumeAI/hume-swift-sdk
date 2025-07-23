@@ -13,7 +13,7 @@ class RequestBuilder {
     private var path: String = ""
     private var method: HTTPMethod = .get
     private var headers: [String: String] = [:]
-    private var queryParams: [String: String] = [:]
+    private var queryParams: [URLQueryItem] = []
     private var body: Data?
     private var cachePolicy: URLRequest.CachePolicy = .useProtocolCachePolicy
     private var timeoutInterval: TimeInterval = 60  // Default 60 second timeout
@@ -46,7 +46,7 @@ class RequestBuilder {
         return self
     }
     
-    func setQueryParams(_ params: [String: String]) -> RequestBuilder {
+    func setQueryParams(_ params: [URLQueryItem]) -> RequestBuilder {
         self.queryParams = params
         return self
     }
@@ -71,7 +71,7 @@ class RequestBuilder {
     func build() throws -> URLRequest {
         var components = URLComponents(url: baseURL.appendingPathComponent(path), resolvingAgainstBaseURL: false)
         if !queryParams.isEmpty {
-            components?.queryItems = queryParams.map { URLQueryItem(name: $0.key, value: $0.value) }
+            components?.queryItems = queryParams
         }
         
         guard let url = components?.url else {
