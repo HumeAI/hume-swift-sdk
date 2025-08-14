@@ -51,17 +51,6 @@ extension SoundClip {
       header: audioData.parseWAVHeader())
   }
 
-  public static func from(_ snippet: Snippet) -> SoundClip? {
-    guard let audioData = Data(base64Encoded: snippet.audio) else {
-      return nil
-    }
-
-    return SoundClip(
-      id: snippet.generationId,
-      audioData: audioData,
-      header: audioData.parseWAVHeader())
-  }
-
   public static func from(_ snippetAudioChunk: SnippetAudioChunk) -> SoundClip? {
     guard let audioData = Data(base64Encoded: snippetAudioChunk.audio) else {
       return nil
