@@ -4,6 +4,9 @@ import Foundation
 
 protocol AudioSessionDelegate: AnyObject {
   func audioEngineDidChangeConfiguration()
+  func audioSessionRouteDidChange(reason: AVAudioSession.RouteChangeReason)
+  func audioSessionInterruptionDidBegin()
+  func audioSessionInterruptionDidEnd(shouldResume: Bool)
 }
 
 class AudioSession {
@@ -13,25 +16,33 @@ class AudioSession {
   static let shared = AudioSession()
 
   private var activeConfig: AudioHubConfiguration? = nil
+  private var isActive: Bool = false
 
   @Published var isDeviceSpeakerActive: Bool = false
   weak var delegate: (any AudioSessionDelegate)? = nil
 
-  // Track observer registration
-  private var observersRegistered = false
+  init() {
+    registerAVObservers()
+  }
 
   func start() throws {
     Logger.info("Starting audio session")
     guard activeConfig != nil else {
       throw AudioSessionError.unconfigured
     }
+    guard !isActive else {
+      Logger.warn("Audio session is already active.")
+      return
+    }
     try audioSession.setActive(true)
+    isActive = true
     try handleAudioRouting()
   }
 
   func stop() throws {
     Logger.info("Stopping audio session")
     try audioSession.setActive(false, options: [.notifyOthersOnDeactivation])
+    isActive = false
   }
 
   // MARK: Configuring
@@ -45,15 +56,14 @@ class AudioSession {
 
     do {
       switch configuration {
-      case .voiceChat:
+      case .inputOutput:
         try audioSession.setPreferredIOBufferDuration(Constants.InputBufferDuration)  //20 ms as per EVI docs
         try audioSession.setPreferredSampleRate(Constants.SampleRate)
-      case .tts:
+      case .outputOnly:
         break
       }
 
-      try updateCategory(config: configuration)
-      registerAVObservers()
+      try update(with: configuration)
       Logger.info("Audio session configured successfully")
     } catch let error as AudioSessionError {
       throw error
@@ -63,16 +73,17 @@ class AudioSession {
     }
   }
 
-  private func updateCategory(config: AudioHubConfiguration) throws {
+  private func update(with config: AudioHubConfiguration) throws {
     let (category, mode, options) = (config.category, config.mode, config.options)
     guard AVAudioSession.sharedInstance().availableCategories.contains(category) else {
       throw AudioSessionError.unsupportedConfiguration(reason: "\(category) is not supported.")
     }
+    Logger.debug(
+      "Updating audio session to category: \(category), mode: \(mode), options: \(options)")
     try audioSession.setCategory(category, mode: mode, options: options)
   }
 
   private func registerAVObservers() {
-    guard !observersRegistered else { return }
     NotificationCenter.default.addObserver(
       self,
       selector: #selector(handleInterruption),
@@ -88,12 +99,6 @@ class AudioSession {
       selector: #selector(handleConfigurationChange),
       name: .AVAudioEngineConfigurationChange,
       object: nil)
-    observersRegistered = true
-  }
-
-  private func unregisterAVObservers() {
-    NotificationCenter.default.removeObserver(self)
-    observersRegistered = false
   }
 
   // MARK: - Audio Routing
@@ -169,8 +174,29 @@ extension AudioSession {
 
   @objc
   private func handleInterruption(_ notification: Notification) {
-    // TODO: implement interruption handling
-    Logger.info("Interruption notification received")
+    Logger.debug("Interruption notification received")
+    guard let userInfo = notification.userInfo,
+      let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt,
+      let type = AVAudioSession.InterruptionType(rawValue: typeValue)
+    else {
+      return
+    }
+    switch type {
+    case .began:
+      self.delegate?.audioSessionInterruptionDidBegin()
+    case .ended:
+      guard let optionsValue = userInfo[AVAudioSessionInterruptionOptionKey] as? UInt else {
+        return
+      }
+      let options = AVAudioSession.InterruptionOptions(rawValue: optionsValue)
+      if options.contains(.shouldResume) {
+        self.delegate?.audioSessionInterruptionDidEnd(shouldResume: true)
+      } else {
+        self.delegate?.audioSessionInterruptionDidEnd(shouldResume: false)
+      }
+    @unknown default:
+      Logger.warn("Unhandled interruption type: \(type)")
+    }
   }
 
   @objc
@@ -190,12 +216,13 @@ extension AudioSession {
       Task {
         do {
           try handleAudioRouting()
+          delegate?.audioSessionRouteDidChange(reason: reason)
         } catch {
           Logger.error("Route change error: \(error.localizedDescription)")
         }
       }
     case .noSuitableRouteForCategory, .override, .categoryChange:
-      Logger.info("Skipping route change, handling separately as interruption: \(reason)")
+      Logger.info("Skipping route change reason: \(reason)")
     @unknown default:
       Logger.warn("Unhandled route change type: \(reason)")
     }

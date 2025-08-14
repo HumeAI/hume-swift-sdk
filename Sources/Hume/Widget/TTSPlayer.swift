@@ -5,12 +5,12 @@
 //  Created by Chris on 7/7/25.
 //
 
+import AVFoundation
+
 /// Audio player that directly plays a TTS stream from a request
 public protocol TTSPlayer {
   func playTtsStream(_ request: PostedTts) async throws
 
-  /// Prepares the audio player. Call this before attempting to play a strema
-  func prepare() async throws
   /// Stops the audio player. Call this when navigating away from TTS functionality in your app.
   func teardown() async throws
 }
@@ -18,6 +18,7 @@ public protocol TTSPlayer {
 /// Audio player that directly plays a TTS stream from a request. Use this widget for a quick and simple streaming solution.
 public class TTSPlayerImpl: TTSPlayer {
   private var audioHub: AudioHub
+  private var _soundPlayer: SoundPlayer?
   private let tts: TTS
 
   public init(audioHub: AudioHub, tts: TTS) {
@@ -26,22 +27,13 @@ public class TTSPlayerImpl: TTSPlayer {
   }
 
   public func playTtsStream(_ request: PostedTts) async throws {
-    if audioHub.stateSubject.value != .running {
-      try await prepare()
-    }
-
     try await playFileStream(for: request)
   }
 
   // MARK: - Lifecycle
 
-  public func prepare() async throws {
-    try await audioHub.configure(with: .tts)
-    try await audioHub.start()
-  }
-
   public func teardown() async throws {
-    try await audioHub.stop()
+    //    try await audioHub.stop()
   }
 
   // MARK: - Playback
@@ -50,12 +42,29 @@ public class TTSPlayerImpl: TTSPlayer {
     let stream = tts.synthesizeFileStreaming(request: request)
 
     for try await data in stream {
-      guard let soundClip = SoundClip.from(data) else {
+      guard let soundClip = SoundClip.from(data), let format = soundClip.header?.asAVAudioFormat
+      else {
         Logger.warn("failed to create sound clip")
         return
       }
-      try await audioHub.enqueue(soundClip: soundClip)
+
+      let soundPlayer = try await getSoundPlayer(format: format)
+
+      try await soundPlayer.enqueueAudio(soundClip: soundClip)
 
     }
+  }
+
+  private func getSoundPlayer(format: AVAudioFormat) async throws -> SoundPlayer {
+    if let _soundPlayer, await _soundPlayer.format == format {
+      return _soundPlayer
+    } else if let _soundPlayer, await _soundPlayer.format != format {
+      Logger.debug("SoundPlayer format mismatch, detaching old node")
+      try await audioHub.detachNode(_soundPlayer.audioSourceNode)
+    }
+    Logger.debug("Creating new SoundPlayer with format \(format.prettyPrinted)")
+    _soundPlayer = SoundPlayer(format: format)
+    try await audioHub.addNode(_soundPlayer!.audioSourceNode, format: format)
+    return _soundPlayer!
   }
 }

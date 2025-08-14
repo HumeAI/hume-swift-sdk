@@ -55,11 +55,6 @@ internal final class Microphone: NSObject {
       sourceFormat: inputFormat, destinationFormat: desiredFormat,
       sampleSize: AVAudioFrameCount(micConfig.sampleSize))
 
-    #if !targetEnvironment(simulator)
-      // enable voice processing. this doesn't work on simulator
-      try enableVoiceProcessing(inputNode: inputNode, outputNode: outputNode)
-    #endif
-
     Logger.info("Mic configuration complete")
   }
 
@@ -93,38 +88,6 @@ internal final class Microphone: NSObject {
     }
 
     return noErr
-  }
-
-  private func enableVoiceProcessing(inputNode: AVAudioInputNode, outputNode: AVAudioOutputNode)
-    throws
-  {
-    if inputNode.isVoiceProcessingEnabled == false {
-      do {
-        try inputNode.setVoiceProcessingEnabled(true)
-        Logger.info("Voice Processing Enabled on input node")
-      } catch {
-        Logger.error(
-          "Failed to enable voice processing on output node: \(error.localizedDescription)")
-        throw MicrophoneError.configuration(error)
-      }
-    }
-
-    if outputNode.isVoiceProcessingEnabled == false {
-      do {
-        try outputNode.setVoiceProcessingEnabled(true)
-        Logger.info("Voice Processing Enabled on output node")
-      } catch {
-        Logger.error(
-          "Failed to enable voice processing on output node: \(error.localizedDescription)")
-        throw MicrophoneError.configuration(error)
-      }
-    }
-
-    if #available(iOS 17.0, *) {
-      let duckingConfig = AVAudioVoiceProcessingOtherAudioDuckingConfiguration(
-        enableAdvancedDucking: false, duckingLevel: .max)
-      inputNode.voiceProcessingOtherAudioDuckingConfiguration = duckingConfig
-    }
   }
 }
 
