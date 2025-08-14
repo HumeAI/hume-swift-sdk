@@ -14,8 +14,8 @@ public class VoiceProvider: VoiceProvidable {
     label: "\(Constants.Namespace).delegate.queue", qos: .userInteractive)
   private var eventSubscription: Task<(), any Error>?
 
-  private var audioHub: AudioHub = AudioHubImpl()
-  private var audioHubStateCancellable: AnyCancellable?
+  private var audioHub: AudioHub = AudioHub.shared
+  private var _soundPlayer: SoundPlayer?
 
   private var connectionContinuation: CheckedContinuation<(), any Error>?
 
@@ -24,7 +24,9 @@ public class VoiceProvider: VoiceProvidable {
   // MARK: - Metering
   public var isOutputMeteringEnabled: Bool = false {
     didSet {
-      audioHub.isOutputMeteringEnabled = isOutputMeteringEnabled
+      Task {
+        await _soundPlayer?.toggleMetering(enabled: isOutputMeteringEnabled)
+      }
     }
   }
 
@@ -66,10 +68,6 @@ public class VoiceProvider: VoiceProvidable {
       Logger.debug("...disconnected")
     }
     stateSubject.send(.connecting)
-    audioHub.microphoneDataChunkHandler = handleMicrophoneData(_:averagePower:)
-    if audioHub.stateSubject.value == .unconfigured {
-      try await audioHub.configure(with: .voiceChat)
-    }
 
     var defaultedSessionSettings: SessionSettings? = nil
     if sessionSettings.audio == nil {
@@ -121,30 +119,32 @@ public class VoiceProvider: VoiceProvidable {
     }
   }
 
-  private func completeConnectionSetup(error: Error? = nil) {
+  private func completeConnectionSetup() {
     guard let connectionContinuation else {
       Logger.error("missing connection continuation")
       Task { await self.disconnect() }
       return
     }
 
-    if let error {
-      Task {
-        await self.disconnect()
+    Logger.info("Finalizing audio hub configuration")
+
+    Task {
+      do {
+        try await self.audioHub.startMicrophone(handler: handleMicrophoneData)
+      } catch {
+        Logger.error("failed to start microphone", error)
         connectionContinuation.resume(throwing: error)
+        self.connectionContinuation = nil
+        return
       }
-    } else {
-      Logger.info("Finalizing audio hub configuration")
-      self.audioHub.isOutputMeteringEnabled = self.isOutputMeteringEnabled
-      self.audioHub.outputMeterListener = self.handleOutputMeter(_:)
       self.stateSubject.send(.connected)
-      self.delegateQueue.async {
-        self.delegate?.voiceProviderDidConnect(self)
-      }
-      connectionContinuation.resume()
+      self.delegate?.voiceProviderDidConnect(self)
+
       Logger.info("Voice Provider connected successfully")
+      connectionContinuation.resume()
+      self.connectionContinuation = nil
     }
-    self.connectionContinuation = nil
+
   }
 
   public func disconnect() async {
@@ -154,28 +154,22 @@ public class VoiceProvider: VoiceProvidable {
       return
     }
     await MainActor.run { stateSubject.send(.disconnecting) }
-    self.delegateQueue.async {
-      self.delegate?.voiceProviderWillDisconnect(self)
-    }
+    self.delegate?.voiceProviderWillDisconnect(self)
     Logger.info("Disconnecting voice provider")
 
-    do {
-      try await self.audioHub.stop()
-    } catch {
-      Logger.error("Failed to stop audio hub: \(error)")
-    }
+    await self.audioHub.stopMicrophone()
+    await _soundPlayer?.clearQueue()
+    _soundPlayer = nil
     self.eventSubscription?.cancel()
     self.socket?.close()
     Logger.info("Voice provider disconnected")
-    self.delegateQueue.async {
-      self.delegate?.voiceProviderDidDisconnect(self)
-    }
+    self.delegate?.voiceProviderDidDisconnect(self)
     stateSubject.send(.disconnected)
   }
 
   // MARK: - Controls
   public func mute(_ mute: Bool) {
-    audioHub.muteMic(mute)
+    Task { await audioHub.muteMic(mute) }
   }
 
   public func sendUserInput(message: String) async throws {
@@ -200,7 +194,7 @@ public class VoiceProvider: VoiceProvidable {
   }
 }
 
-// MARK: - Private
+// MARK: - Event Handling
 extension VoiceProvider {
   // MARK: Event handling
   private func startListeningForEvents() {
@@ -243,34 +237,58 @@ extension VoiceProvider {
     }
   }
 
+  /// Handles incoming audio output events by decoding and playing the audio clip.
+  private func handleAudioOutput(_ audioOutput: AudioOutput) {
+    guard let clip = SoundClip.from(audioOutput) else {
+      Logger.error("Failed to decode audio output")
+      return
+    }
+
+    guard let header = clip.header,
+      let format = header.asAVAudioFormat
+    else {
+      Logger.error("Audio clip missing header")
+      return
+    }
+
+    Task {
+      do {
+        let soundPlayer = try await getSoundPlayer(format: format)
+        try await soundPlayer.enqueueAudio(soundClip: clip)
+        self.delegate?.voiceProvider(self, didPlayClip: clip)
+      } catch let error as AudioHubError {
+        Logger.warn("Failed to enqueue audio output: \(error)")
+        self.delegate?.voiceProvider(self, didProduceError: .audioHubError(error))
+      } catch {
+        Logger.error("Unknown error while trying to enqueue audio output: \(error)")
+        self.delegate?.voiceProvider(self, didProduceError: .unknown(error))
+      }
+    }
+  }
+
+  /// Gets an existing SoundPlayer with the specified format or creates a new one if necessary.
+  private func getSoundPlayer(format: AVAudioFormat) async throws -> SoundPlayer {
+    if let _soundPlayer, await _soundPlayer.format == format {
+      return _soundPlayer
+    } else if let _soundPlayer, await _soundPlayer.format != format {
+      Logger.debug("SoundPlayer format mismatch, detaching old node")
+      try await audioHub.detachNode(_soundPlayer.audioSourceNode)
+    }
+    Logger.debug("Creating new SoundPlayer with format \(format.prettyPrinted)")
+    _soundPlayer = SoundPlayer(format: format)
+    await _soundPlayer!.startMetering(callback: self.handleOutputMeter)
+    await _soundPlayer!.toggleMetering(enabled: self.isOutputMeteringEnabled)
+    try await audioHub.addNode(_soundPlayer!.audioSourceNode, format: format)
+    return _soundPlayer!
+  }
+
   /// Handles individual incoming events
   private func handleIncomingEvent(_ event: SubscribeEvent) throws {
     switch event {
     case .audioOutput(let audioOutput):
-      guard let clip = SoundClip.from(audioOutput) else {
-        Logger.error("Failed to decode audio output")
-        return
-      }
-      Task {
-        do {
-          try await self.audioHub.enqueue(soundClip: clip)
-          self.delegateQueue.async {
-            self.delegate?.voiceProvider(self, didPlayClip: clip)
-          }
-        } catch let error as AudioHubError {
-          Logger.warn("Failed to enqueue audio output: \(error)")
-          self.delegateQueue.async {
-            self.delegate?.voiceProvider(self, didProduceError: .audioHubError(error))
-          }
-        } catch {
-          Logger.error("Unknown error while trying to enqueue audio output: \(error)")
-          self.delegateQueue.async {
-            self.delegate?.voiceProvider(self, didProduceError: .unknown(error))
-          }
-        }
-      }
+      handleAudioOutput(audioOutput)
     case .userInterruption:
-      self.audioHub.handleInterruption()
+      Task { await self._soundPlayer?.clearQueue() }
     case .chatMetadata(let response):
       Logger.debug(
         """
@@ -279,12 +297,7 @@ extension VoiceProvider {
         Chat Group ID: \(response.chatGroupId)
         """)
       Task {
-        do {
-          try await self.audioHub.start()
-          completeConnectionSetup()
-        } catch {
-          completeConnectionSetup(error: error)
-        }
+        completeConnectionSetup()
       }
     case .webSocketError(let error):
       if error.slug == "inactivity_timeout" {
@@ -315,9 +328,7 @@ extension VoiceProvider {
       return
     }
     do {
-      delegateQueue.async {
-        self.delegate?.voiceProvider(self, didReceieveAudioInputMeter: averagePower)
-      }
+      self.delegate?.voiceProvider(self, didReceieveAudioInputMeter: averagePower)
       try await self.socket?.sendData(message: data)
     } catch let error as StreamSocketError {
       // disconnect VoiceProvider if needed
@@ -325,21 +336,17 @@ extension VoiceProvider {
       case .closed, .disconnected:
         Logger.warn("received closed or disconnected error while sending mic data, cleaning up")
         // if the socket is closed or disconnected while we're attempting to send mic data, it means AudioHub didn't
-        try? await self.audioHub.stop()
+        await self.audioHub.stopMicrophone()
       case .connectionError, .transportError, .encodingError, .decodingError:
         Logger.error("error sending mic data: \(error.rawValue), disconnecting...")
-        delegateQueue.async {
-          self.delegate?.voiceProvider(
-            self, didProduceError: VoiceProviderError.socketSendError(error))
-        }
+        self.delegate?.voiceProvider(
+          self, didProduceError: VoiceProviderError.socketSendError(error))
         await self.disconnect()
       }
     } catch {
       Logger.error("error sending mic data: \(error)")
-      delegateQueue.async {
-        self.delegate?.voiceProvider(
-          self, didProduceError: VoiceProviderError.socketSendError(error))
-      }
+      self.delegate?.voiceProvider(
+        self, didProduceError: VoiceProviderError.socketSendError(error))
     }
   }
 }
