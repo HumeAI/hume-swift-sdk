@@ -23,6 +23,7 @@ public class Chat: NSObject {
     configId: String? = nil,
     configVersion: String? = nil,
     resumedChatGroupId: String? = nil,
+    voiceId: String? = nil,
     onOpen: ((URLResponse?) -> Void)? = nil,
     onClose: ((Int, String?) -> Void)? = nil,
     onError: ((Error, URLResponse?) -> Void)? = nil
@@ -50,6 +51,9 @@ public class Chat: NSObject {
     if let resumedChatGroupId {
       components?.queryItems?.append(
         URLQueryItem(name: "resumed_chat_group_id", value: resumedChatGroupId))
+    }
+    if let voiceId {
+      components?.queryItems?.append(URLQueryItem(name: "voice_id", value: voiceId))
     }
 
     let url = components!.url!
