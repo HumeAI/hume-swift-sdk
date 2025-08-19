@@ -80,7 +80,9 @@ class AudioSession {
     }
     Logger.debug(
       "Updating audio session to category: \(category), mode: \(mode), options: \(options)")
+      Logger.debug("Current category options: \(audioSession.categoryOptions.rawValue)")
     try audioSession.setCategory(category, mode: mode, options: options)
+      Logger.debug("Updated category options: \(audioSession.categoryOptions.rawValue)")
   }
 
   private func registerAVObservers() {

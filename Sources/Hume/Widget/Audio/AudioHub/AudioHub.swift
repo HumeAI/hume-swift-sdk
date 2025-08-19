@@ -35,37 +35,44 @@ public actor AudioHub {
   public var outputNodes: [AVAudioNode] = []
 
   // MARK: Microphone
+    public private(set) var isRecording: Bool = false
   private var microphone: Microphone?
   private let microphoneQueue = DispatchQueue(label: "\(Constants.Namespace).microphone.queue")
   public var microphoneDataChunkHandler: MicrophoneDataChunkBlock?
 
   // MARK: State
-  var config: AudioHubConfiguration
+    private var config: AudioHubConfiguration = .outputOnly
   // MARK: - Initialization
   public static let shared = AudioHub()
 
   private init() {
-    config = .outputOnly
-    do {
-      try audioSession.configure(with: config)
-    } catch {
-      Logger.error("Failed to configure audio session with \(config): \(error)")
-
-    }
     audioSession.delegate = self
   }
+    
+    public func prepare() {
+        do {
+          try audioSession.configure(with: config)
+            try audioSession.start()
+        } catch {
+          Logger.error("Failed to configure audio session with \(config): \(error)")
+        }
+    }
 
   // MARK: - Lifecycle
 
   public func addNode(_ node: AVAudioNode, format: AVAudioFormat?) throws {
     Logger.debug("Adding node: \(node)")
-    try audioSession.start()
+      guard !audioEngine.attachedNodes.contains(node) else {
+          Logger.warn("Node already attached: \(node)")
+          return
+      }
+//    try audioSession.start()
     audioEngine.attach(node)
     audioEngine.connect(node, to: mainMixer, format: format)
     outputNodes.append(node)
     if !audioEngine.isRunning {
-      Logger.debug("starting audio engine")
-      try audioEngine.start()
+      Logger.debug("preparing audio engine")
+      try audioEngine.prepare()
     }
   }
 
@@ -85,11 +92,45 @@ public actor AudioHub {
     audioEngine.detach(node)
   }
 
-  public func ensureRunning() throws {
-    if !audioEngine.isRunning {
-      try audioEngine.start()
+    public func startEngine() throws {
+        guard !audioEngine.isRunning else {
+            return
+        }
+        logEngineState()
+        Logger.debug("Starting audio engine")
+        try audioEngine.start()
     }
-  }
+    
+    public func stopEngine() {
+        logEngineState()
+        Logger.debug("Stopping audio engine")
+        audioEngine.stop()
+    }
+    
+    private func logEngineState(failed: Bool = false) {
+        if !failed {
+            Logger.debug(">> Attempting to start AudioEngine")
+            Logger.debug("   Category: \(AVAudioSession.sharedInstance().category.rawValue)")
+            Logger.debug("   Mode: \(AVAudioSession.sharedInstance().mode.rawValue)")
+            Logger.debug("   Options: \(AVAudioSession.sharedInstance().categoryOptions)")
+            Logger.debug("VoiceProcessingEnabled on input: \(try? inputNode.isVoiceProcessingEnabled)")
+            if #available(iOS 17.0, *) {
+                let duckingConfig = inputNode.voiceProcessingOtherAudioDuckingConfiguration
+                Logger.debug("OtherAudioDuckingConfig: \(String(describing: duckingConfig))")
+            }
+            Logger.debug("Engine.isRunning: \(audioEngine.isRunning)")
+            Logger.debug("Engine.attached nodes: \(audioEngine.attachedNodes.map { String(describing: type(of: $0)) })")
+        } else {
+            Logger.error("=== FAILING STATE SUMMARY ===")
+            Logger.error("category: \(AVAudioSession.sharedInstance().category.rawValue), mode: \(AVAudioSession.sharedInstance().mode.rawValue), options: \(AVAudioSession.sharedInstance().categoryOptions)")
+            Logger.error("Input VP enabled: \(try? inputNode.isVoiceProcessingEnabled)")
+            if #available(iOS 17.0, *) {
+                Logger.error("Ducking config: \(String(describing: inputNode.voiceProcessingOtherAudioDuckingConfiguration))")
+            }
+            Logger.error("Engine isRunning? \(audioEngine.isRunning)")
+            Logger.error("Attached nodes: \(audioEngine.attachedNodes.map { String(describing: type(of: $0)) })")
+        }
+    }
 }
 
 // MARK: - Microphone
@@ -125,12 +166,13 @@ extension AudioHub {
     microphoneDataChunkHandler = handler
     self.microphone?.onChunk = handleMicrophoneDataChunk
 
-    let inputFormat = inputNode.outputFormat(forBus: 0)
+    let inputFormat = inputNode.inputFormat(forBus: 0)
     audioEngine.attach(microphone.sinkNode)
     audioEngine.connect(inputNode, to: microphone.sinkNode, format: inputFormat)
 
     Logger.debug("starting audio engine")
     try audioEngine.start()
+      isRecording = true
   }
 
   private func toggleVoiceProcessing(
@@ -151,28 +193,47 @@ extension AudioHub {
 
     if #available(iOS 17.0, *) {
       if enabled {
-        let duckingConfig = AVAudioVoiceProcessingOtherAudioDuckingConfiguration(
-          enableAdvancedDucking: false, duckingLevel: .max)
-        inputNode.voiceProcessingOtherAudioDuckingConfiguration = duckingConfig
+        inputNode.voiceProcessingOtherAudioDuckingConfiguration = AVAudioVoiceProcessingOtherAudioDuckingConfiguration(
+            enableAdvancedDucking: true, duckingLevel: .max)
+      } else {
+          inputNode.voiceProcessingOtherAudioDuckingConfiguration = AVAudioVoiceProcessingOtherAudioDuckingConfiguration(
+              enableAdvancedDucking: false, duckingLevel: .default)
       }
     }
   }
 
-  public func stopMicrophone() {
+  public func stopMicrophone() async {
     Logger.info("Stopping microphone")
     guard let microphone else {
       Logger.warn("No microphone to stop")
       return
     }
+      audioEngine.disconnectNodeOutput(inputNode)
     audioEngine.detach(microphone.sinkNode)
-    Logger.debug("stopping audio engine")
-    audioEngine.stop()
-    try? toggleVoiceProcessing(enabled: false, inputNode: inputNode, outputNode: outputNode)
+      isRecording = false 
+//    audioEngine.reset()
 
-    try? audioSession.configure(with: .outputOnly)
+      do {
+          logEngineState()
+          audioEngine.stop()
+          
+          try toggleVoiceProcessing(enabled: false, inputNode: inputNode, outputNode: outputNode)
+          
+          try audioSession.stop()
+//          Thread.sleep(forTimeInterval: 1) // Allow session to reset
+          try audioSession.configure(with: .outputOnly)
+          
+          try audioSession.start()
+          audioEngine.reset()
+          try audioEngine.prepare()
+//          try audioEngine.start()
+      } catch {
+            Logger.error("Failed to reset audio session: \(error)")
+          logEngineState(failed: true)
+      }
 
     microphoneDataChunkHandler = nil
-    self.microphone = nil
+//    self.microphone = nil
   }
 
   public func muteMic(_ mute: Bool) {
@@ -205,10 +266,6 @@ extension AudioHub {
 extension AudioHub: AudioSessionDelegate {
   nonisolated func audioSessionRouteDidChange(reason: AVAudioSession.RouteChangeReason) {
     Logger.debug("Audio session route changed: \(reason.rawValue)")
-    Task {
-      Logger.debug("starting audio engine")
-      try await audioEngine.start()
-    }
   }
 
   nonisolated func audioSessionInterruptionDidBegin() {

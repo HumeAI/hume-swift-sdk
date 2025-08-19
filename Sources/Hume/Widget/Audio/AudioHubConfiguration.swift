@@ -32,7 +32,7 @@ enum AudioHubConfiguration {
       ]
     case .outputOnly:
       // no option necessary
-      return []
+        return AVAudioSession.CategoryOptions(rawValue: 0)
     }
   }
 
