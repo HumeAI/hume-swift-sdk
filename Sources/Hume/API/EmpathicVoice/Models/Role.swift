@@ -6,5 +6,4 @@ public enum Role: String, Codable {
   case user = "user"
   case all = "all"
   case tool = "tool"
-  case context = "context"
 }

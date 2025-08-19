@@ -13,7 +13,7 @@ public struct MicrophoneMode {
   /// The microphone mode currently active on the device
   public let activeMode: AVCaptureDevice.MicrophoneMode
 
-  package init(
+  public init(
     preferredMode: AVCaptureDevice.MicrophoneMode, activeMode: AVCaptureDevice.MicrophoneMode
   ) {
     self.preferredMode = preferredMode
