@@ -658,9 +658,6 @@ const schemaToSwiftType = (
             constValue?: string;
             isCommentedOut?: boolean;
           } | null => {
-            if (propName == "prosody") {
-              console.log(prop);
-            }
             if (prop.kind === "ignored") {
               return null;
             }

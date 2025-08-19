@@ -145,128 +145,128 @@ const RawJsonSchema = z.lazy((): any =>
 
 export type JsonSchema =
   | {
-      kind: "ignored";
-    }
+    kind: "ignored";
+  }
   | {
-      kind: "anyOfRefs";
-      anyOf: Array<JsonSchema>;
-      schemaKey?: string;
-    }
+    kind: "anyOfRefs";
+    anyOf: Array<JsonSchema>;
+    schemaKey?: string;
+  }
   | {
-      kind: "ref";
-      $ref: string;
-    }
+    kind: "ref";
+    $ref: string;
+  }
   | {
-      kind: "nullableRef";
-      anyOf: [JsonSchema & { kind: "ref" }];
-    }
+    kind: "nullableRef";
+    anyOf: [JsonSchema & { kind: "ref" }];
+  }
   | {
-      kind: "empty";
-    }
+    kind: "empty";
+  }
   | {
-      kind: "inheritance";
-    }
+    kind: "inheritance";
+  }
   | {
-      kind: "discriminatedUnion";
-      description?: string;
-      schemaKey?: string;
-      discriminator: {
-        propertyName: string;
-        mapping: Record<string, string>;
-      };
-      title: string;
-      oneOf: Array<JsonSchema>;
-      nullable?: boolean;
-    }
-  | {
-      kind: "anyOfDiscriminatedUnion";
-      description?: string;
-      discriminant: string;
-      anyOf: Array<JsonSchema>;
-      nullable?: boolean;
-    }
-  | {
-      kind: "anyOfUndiscriminatedUnion";
-      description?: string;
-      anyOf: Array<JsonSchema>;
-      nullable?: boolean;
-    }
-  | {
-      kind: "oneOfUndiscriminatedUnion";
-      description?: string;
-      oneOf: Array<JsonSchema>;
-      nullable?: boolean;
-    }
-  | {
-      kind: "singletonOrArray";
-      description?: string;
-      anyOf: [JsonSchema, JsonSchema];
-      nullable?: boolean;
-    }
-  | {
-      kind: "metadataObject";
-      description?: string;
-      nullable?: boolean;
-    }
-  | {
-      kind: "enum";
-      description?: string;
-      type: "string";
-      title?: string;
-      schemaKey?: string;
-      "x-fern-type-name"?: string;
-      enum: Array<string>;
-      nullable?: boolean;
-    }
-  | {
-      kind: "primitive";
-      description?: string;
-      type: "string" | "number" | "boolean" | "integer" | "null";
-      nullable?: boolean;
-      readOnly?: boolean | null;
-    }
-  | {
-      kind: "const";
-      description?: string;
-      value: string;
-    }
-  | {
-      kind: "stringOrInteger";
-      description?: string;
-      anyOf: [JsonSchema, JsonSchema];
-      nullable?: boolean;
-    }
-  | {
-      kind: "stringNumberBool";
-      description?: string;
-      oneOf: [JsonSchema, JsonSchema, JsonSchema];
-      nullable?: boolean;
-    }
-  | {
-      kind: "object";
-      description?: string;
-      schemaKey?: string;
-      title?: string;
-      "x-fern-type-name"?: string;
-      properties: Record<string, JsonSchema>;
-      required: Array<string>;
-      nullable?: boolean;
-    }
-  | {
-      kind: "array";
-      description?: string;
-      type: "array";
-      items: JsonSchema;
-      nullable?: boolean;
-    }
-  | {
-      kind: "dictionary";
-      description?: string;
-      schemaKey?: string;
-      type: "object";
-      additionalProperties: JsonSchema;
-      nullable?: boolean;
+    kind: "discriminatedUnion";
+    description?: string;
+    schemaKey?: string;
+    discriminator: {
+      propertyName: string;
+      mapping: Record<string, string>;
     };
+    title: string;
+    oneOf: Array<JsonSchema>;
+    nullable?: boolean;
+  }
+  | {
+    kind: "anyOfDiscriminatedUnion";
+    description?: string;
+    discriminant: string;
+    anyOf: Array<JsonSchema>;
+    nullable?: boolean;
+  }
+  | {
+    kind: "anyOfUndiscriminatedUnion";
+    description?: string;
+    anyOf: Array<JsonSchema>;
+    nullable?: boolean;
+  }
+  | {
+    kind: "oneOfUndiscriminatedUnion";
+    description?: string;
+    oneOf: Array<JsonSchema>;
+    nullable?: boolean;
+  }
+  | {
+    kind: "singletonOrArray";
+    description?: string;
+    anyOf: [JsonSchema, JsonSchema];
+    nullable?: boolean;
+  }
+  | {
+    kind: "metadataObject";
+    description?: string;
+    nullable?: boolean;
+  }
+  | {
+    kind: "enum";
+    description?: string;
+    type: "string";
+    title?: string;
+    schemaKey?: string;
+    "x-fern-type-name"?: string;
+    enum: Array<string>;
+    nullable?: boolean;
+  }
+  | {
+    kind: "primitive";
+    description?: string;
+    type: "string" | "number" | "boolean" | "integer" | "null";
+    nullable?: boolean;
+    readOnly?: boolean | null;
+  }
+  | {
+    kind: "const";
+    description?: string;
+    value: string;
+  }
+  | {
+    kind: "stringOrInteger";
+    description?: string;
+    anyOf: [JsonSchema, JsonSchema];
+    nullable?: boolean;
+  }
+  | {
+    kind: "stringNumberBool";
+    description?: string;
+    oneOf: [JsonSchema, JsonSchema, JsonSchema];
+    nullable?: boolean;
+  }
+  | {
+    kind: "object";
+    description?: string;
+    schemaKey?: string;
+    title?: string;
+    "x-fern-type-name"?: string;
+    properties: Record<string, JsonSchema>;
+    required: Array<string>;
+    nullable?: boolean;
+  }
+  | {
+    kind: "array";
+    description?: string;
+    type: "array";
+    items: JsonSchema;
+    nullable?: boolean;
+  }
+  | {
+    kind: "dictionary";
+    description?: string;
+    schemaKey?: string;
+    type: "object";
+    additionalProperties: JsonSchema;
+    nullable?: boolean;
+  };
 const JS: z.Schema<JsonSchema> = z.lazy((): any => JsonSchema_);
 export const JsonSchema_ = z.discriminatedUnion("kind", [
   z.object({
@@ -426,19 +426,19 @@ type RawAsyncAPIMessage = z.infer<typeof RawAsyncAPIMessage>;
 
 export type AsyncAPIMessage =
   | {
-      kind: "message";
-      name: string;
-      description: string;
-      payload: JsonSchema;
-    }
+    kind: "message";
+    name: string;
+    description: string;
+    payload: JsonSchema;
+  }
   | {
-      kind: "oneOf";
-      oneOf: Array<AsyncAPIMessage>;
-    }
+    kind: "oneOf";
+    oneOf: Array<AsyncAPIMessage>;
+  }
   | {
-      kind: "ref";
-      $ref: string;
-    };
+    kind: "ref";
+    $ref: string;
+  };
 
 const AsyncAPIMessage_ = z.discriminatedUnion("kind", [
   z.object({
@@ -1044,30 +1044,6 @@ const AsyncAPISpec = z.object({
 });
 export type AsyncAPISpec = z.infer<typeof AsyncAPISpec>;
 
-const applyOverrides = <T extends RawOpenAPISpec | RawAsyncAPISpec>(
-  overrides: any,
-  spec: T,
-): T => {
-  // Remove the code that deletes new schemas from overrides
-  // This was preventing new schemas defined in override files from being added
-
-  const merged = _.merge(spec, overrides) as T;
-
-  if (
-    "x-fern-base-path" in merged &&
-    "paths" in merged &&
-    merged["x-fern-base-path"] &&
-    merged.paths
-  ) {
-    merged.paths = Object.fromEntries(
-      Object.entries(merged.paths).map(([path, operations]) => {
-        return [merged["x-fern-base-path"] + path, operations];
-      }),
-    );
-  }
-  return merged;
-};
-
 export type KnownSpecs = {
   tts: OpenAPISpec;
   eviAsync: AsyncAPISpec;
@@ -1118,18 +1094,9 @@ export const readKnownSpecs = async (
   baseDir = `${process.cwd()}/apis`,
 ): Promise<KnownSpecs> => {
   try {
-    // Read TTS specs (these files match the expected names)
-    const ttsOverridesPath = baseDir + "/tts/tts-overrides.yml";
-    const ttsOpenApiPath = baseDir + "/tts/tts-openapi.yml";
+    const ttsOpenApiPath = baseDir + "/tts/tts-openapi.json";
 
-    const ttsOverrides = yaml.parse(
-      (await fs.readFile(ttsOverridesPath)).toString(),
-    );
-
-    const ttsOpenApiRaw = applyOverrides(
-      ttsOverrides,
-      yaml.parse((await fs.readFile(ttsOpenApiPath)).toString()),
-    );
+    const ttsOpenApiRaw = JSON.parse(await fs.readFile(ttsOpenApiPath, 'utf8'));
 
     let ttsOpenApiResult;
     try {
@@ -1142,20 +1109,10 @@ export const readKnownSpecs = async (
     }
     const ttsOpenApi: RawOpenAPISpec = ttsOpenApiResult.data;
 
-    // Read EVI specs (using the new file names)
-    const eviOverridesPath =
-      baseDir + "/empathic-voice-interface/evi-openapi-overrides.yml";
     const eviOpenApiPath =
       baseDir + "/empathic-voice-interface/evi-openapi.json";
 
-    const eviOverrides = yaml.parse(
-      (await fs.readFile(eviOverridesPath)).toString(),
-    );
-
-    const eviOpenApiRaw = applyOverrides(
-      eviOverrides,
-      yaml.parse((await fs.readFile(eviOpenApiPath)).toString()),
-    );
+    const eviOpenApiRaw = JSON.parse(await fs.readFile(eviOpenApiPath, 'utf8'))
 
     let eviOpenApiResult;
     try {
@@ -1177,10 +1134,7 @@ export const readKnownSpecs = async (
       (await fs.readFile(eviAsyncApiOverridesPath)).toString(),
     );
 
-    const eviAsyncApiRaw = applyOverrides(
-      eviAsyncApiOverrides,
-      yaml.parse((await fs.readFile(eviAsyncApiPath)).toString()),
-    );
+    const eviAsyncApiRaw = JSON.parse(await fs.readFile(eviAsyncApiPath, 'utf8'))
 
     let eviAsyncApiResult;
     try {

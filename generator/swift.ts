@@ -597,9 +597,12 @@ export const renderNamespaceClient = (
 
   // Use uppercase directory names for TTS
   const directoryName = namespaceName === "tts" ? "TTS" : namespaceName;
+  
+  // Debug logging
+  console.log(`Namespace client: namespaceName="${namespaceName}", directoryName="${directoryName}"`);
 
   return {
-    path: `${basePath}/Sources/Hume/API/${directoryName}/Client/${namespaceName}Client.swift`,
+    path: `${basePath}/Sources/Hume/API/${directoryName}/Client/${directoryName}Client.swift`,
     content: `
     import Foundation
     
@@ -695,7 +698,7 @@ extension Endpoint where Response == ${responseType} {
   const directoryName = namespaceName === "tts" ? "TTS" : namespaceName;
 
   return {
-    path: `${basePath}/Sources/Hume/API/${directoryName}/Resources/${resourceName}/${resourceName}Client.swift`,
+    path: `${basePath}/Sources/Hume/API/${directoryName}/Resources/${resourceName}/${resourceName}.swift`,
     content: `
     import Foundation
     
