@@ -133,8 +133,7 @@
     "customSessionId",
     "toolCallId",
     "toolName",
-    "toolType",
-    "content"
+    "toolType"
   ],
   "UserInput.init": [
     "customSessionId",
