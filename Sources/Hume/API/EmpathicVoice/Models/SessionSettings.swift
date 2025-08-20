@@ -8,6 +8,7 @@ public struct SessionSettings: Codable, Hashable {
   public let languageModelApiKey: String?
   public let tools: [Tool]?
   public let builtinTools: [BuiltinToolConfig]?
+  public let variables: [String: String]?
 
   public init(
     audio: AudioConfiguration?,
@@ -16,7 +17,8 @@ public struct SessionSettings: Codable, Hashable {
     customSessionId: String?,
     languageModelApiKey: String?,
     systemPrompt: String?,
-    tools: [Tool]?
+    tools: [Tool]?,
+    variables: [String: String]?
   ) {
     self.audio = audio
     self.builtinTools = builtinTools
@@ -25,6 +27,7 @@ public struct SessionSettings: Codable, Hashable {
     self.languageModelApiKey = languageModelApiKey
     self.systemPrompt = systemPrompt
     self.tools = tools
+    self.variables = variables
     self.type = "session_settings"
   }
 }
