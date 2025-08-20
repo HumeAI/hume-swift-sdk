@@ -4,6 +4,6 @@ public struct Snippet: Codable, Hashable {
   public let text: String
   public let generationId: String
   public let utteranceIndex: Int?
-  public let audioFormat: AudioFormatType
   public let transcribedText: String?
+  public let audio: String
 }

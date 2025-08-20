@@ -12,15 +12,13 @@ public struct ToolResponseMessage: Codable, Hashable {
     customSessionId: String?,
     toolCallId: String,
     toolName: String?,
-    toolType: ToolType?,
-    content: String
+    toolType: ToolType?
   ) {
     self.content = content
     self.customSessionId = customSessionId
     self.toolCallId = toolCallId
     self.toolName = toolName
     self.toolType = toolType
-    self.content = content
     self.type = "tool_response"
   }
 }
