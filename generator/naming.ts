@@ -102,6 +102,10 @@ export const swiftName = (schema: JsonSchema, surroundingName?: string): string 
     );
   }
 
+  if (schema.kind === "stringNumberBool") {
+    return "StringNumberBool";
+  }
+
   throw new Error(
     `Attempted to produce name for unnameable schema kind: ${schema.kind}`,
   );

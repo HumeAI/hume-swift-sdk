@@ -522,6 +522,8 @@ const decorateJsonSchema_ = (
     addSchemaKind(schema, "empty");
     return;
   }
+
+  
   if ("additionalProperties" in schema && !schema.additionalProperties) {
     delete schema.additionalProperties;
   }
@@ -529,9 +531,28 @@ const decorateJsonSchema_ = (
     addSchemaKind(schema, "inheritance");
     return;
   }
+  // Check for additionalProperties BEFORE anyOf to handle dictionary schemas properly
+  // This handles the case where a schema has additionalProperties (making it a dictionary)
+  // even if it also has anyOf (for nullability)
+  if (
+    schema.type === "object" &&
+    schema.additionalProperties &&
+    typeof schema.additionalProperties === "object"
+  ) {
+    // Check if this schema also has anyOf for nullability
+    if (schema.anyOf && schema.anyOf.some((x: RawJsonSchema) => x.type === "null")) {
+      schema.nullable = true;
+    }
+
+    addSchemaKind(schema, "dictionary");
+    recurse(schema.additionalProperties);
+    return;
+  }
+
   if (schema.anyOf) {
     if (schema.anyOf.every((x: RawJsonSchema) => x.allOf)) {
       addSchemaKind(schema, "inheritance");
+      return;
     }
     {
       // Logic for handling nullability via `anyOf`.
@@ -543,19 +564,40 @@ const decorateJsonSchema_ = (
         schema.anyOf.splice(nullAt, 1);
       }
 
-      if (schema.anyOf.length === 1) {
-        if (schema.anyOf[0].$ref) {
-          addSchemaKind(schema, "nullableRef");
-          console.log("got nullable ref");
-          recurse(schema.anyOf[0]);
-          return;
-        }
+          if (schema.anyOf.length === 1) {
+      if (schema.anyOf[0].$ref) {
+        addSchemaKind(schema, "nullableRef");
+
         recurse(schema.anyOf[0]);
-        const nullable = schema.nullable; // Preserve the nullable property
-        Object.assign(schema, schema.anyOf[0]);
-        schema.nullable = nullable; // Restore the nullable property
         return;
       }
+      
+      // Check if the single variant has additionalProperties that should make this a dictionary
+      if (schema.anyOf[0].type === "object" && schema.anyOf[0].additionalProperties) {
+        // This should be a dictionary
+        if (typeof schema.anyOf[0].additionalProperties === "object") {
+          // Copy the additionalProperties to the parent schema
+          schema.additionalProperties = schema.anyOf[0].additionalProperties;
+          addSchemaKind(schema, "dictionary");
+          recurse(schema.additionalProperties);
+          return;
+        } else if (schema.anyOf[0].additionalProperties === true) {
+          // If additionalProperties is true, check if the parent has additionalProperties object
+          if (schema.additionalProperties && typeof schema.additionalProperties === "object") {
+            schema.type = "object"; // Ensure type is set for dictionary validation
+            addSchemaKind(schema, "dictionary");
+            recurse(schema.additionalProperties);
+            return;
+          }
+        }
+      }
+      
+      recurse(schema.anyOf[0]);
+      const nullable = schema.nullable; // Preserve the nullable property
+      Object.assign(schema, schema.anyOf[0]);
+      schema.nullable = nullable; // Restore the nullable property
+      return;
+    }
     }
 
     for (const variant of schema.anyOf) {
@@ -694,15 +736,6 @@ const decorateJsonSchema_ = (
         recurse(schema.properties[k]);
       }
     }
-    return;
-  }
-  if (
-    schema.type === "object" &&
-    schema.additionalProperties &&
-    typeof schema.additionalProperties === "object"
-  ) {
-    addSchemaKind(schema, "dictionary");
-    recurse(schema.additionalProperties);
     return;
   }
   if (schema.type === "object") {

@@ -109,7 +109,8 @@
     "customSessionId",
     "languageModelApiKey",
     "systemPrompt",
-    "tools"
+    "tools",
+    "variables"
   ],
   "Tool.init": [
     "description",

@@ -637,9 +637,13 @@ const schemaToSwiftType = (
     case "stringOrInteger":
       return todo("stringOrInteger not implemented yet");
     case "stringNumberBool":
-      return todo("stringNumberBool not implemented yet");
+      // For simplicity, just use String instead of a complex union
+      console.log("Using String type for stringNumberBool for simplicity");
+      return result({ type: "String" }, {});
     case "object": {
       const name = swiftName(schema);
+
+
 
       const defs: Record<string, SwiftDefinition> = {};
       const rawProperties: Array<{
@@ -969,11 +973,14 @@ const buildSwiftSdk = (specs: OA.KnownSpecs): SwiftSDK => {
   const allSchemas: Record<string, JsonSchema> = {};
 
   // Add TTS schemas with tts: prefix
+
   for (const [key, schema] of Object.entries(specs.tts.components.schemas)) {
     const prefixedKey = `tts:${key}`;
     allSchemas[prefixedKey] = schema;
     // Update the schemaKey to maintain traceability
     (schema as any).schemaKey = prefixedKey;
+    
+
   }
 
   // Add EVI AsyncAPI schemas with evi: prefix
@@ -984,7 +991,11 @@ const buildSwiftSdk = (specs: OA.KnownSpecs): SwiftSDK => {
     allSchemas[prefixedKey] = schema;
     // Update the schemaKey to maintain traceability
     (schema as any).schemaKey = prefixedKey;
+    
+
   }
+
+  // Note: StringNumberBool is now handled directly as String type for simplicity
 
   // Create a lookup function that handles special cases and renames
   const lookupSchema = (
@@ -1059,16 +1070,24 @@ const buildSwiftSdk = (specs: OA.KnownSpecs): SwiftSDK => {
     schemaToNamespace.set(`tts:${schemaKey}`, "tts");
   }
 
+  // StringNumberBool is now handled directly as String, no special namespace needed
+
   // ==== MAIN LOGIC: Step 3: Definitions ====
   // We now walk through all the schemas and add them to the SDK as definitions.
   // We also add any special cases (like EmotionScores) as definitions.
 
+      
+  
   Object.entries(allSchemas).forEach(([name, schema]) => {
     if (schema.kind === "ignored") {
       return;
     }
 
     const schemaKey = (schema as any).schemaKey;
+
+    // StringNumberBool is now handled directly as String for simplicity
+
+
 
     // Skip schemas without schemaKey (these are typically internal schemas not meant for generation)
     if (schemaKey === undefined) {
@@ -1096,6 +1115,7 @@ const buildSwiftSdk = (specs: OA.KnownSpecs): SwiftSDK => {
 
     // Skip orphaned schemas (schemas that are not referenced by any endpoints)
     if (direction === "orphaned") {
+      console.log(`Skipping orphaned schema: ${schemaKey}`);
       return;
     }
 
@@ -1142,6 +1162,8 @@ const buildSwiftSdk = (specs: OA.KnownSpecs): SwiftSDK => {
       addDefinition(namespace, def);
     });
   });
+
+
 
   return sdk;
 };
