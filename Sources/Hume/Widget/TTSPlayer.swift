@@ -26,7 +26,7 @@ public class TTSPlayerImpl: TTSPlayer {
   }
 
   public func playTtsStream(_ request: PostedTts) async throws {
-    if await audioHub.stateSubject.value != .running {
+    if audioHub.stateSubject.value != .running {
       try await prepare()
     }
 
