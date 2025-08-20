@@ -1,0 +1,212 @@
+{
+  "PostedContextWithGenerationId.init": [
+    "generationId"
+  ],
+  "PostedContextWithUtterances.init": [
+    "utterances"
+  ],
+  "AudioEncoding.init": [
+    "format",
+    "sampleRate"
+  ],
+  "ReturnGeneration.init": [
+    "generationId",
+    "duration",
+    "fileSize",
+    "encoding",
+    "audio",
+    "snippets"
+  ],
+  "HttpValidationError.init": [
+    "detail"
+  ],
+  "FormatMp3.init": [],
+  "PostedTts.init": [
+    "context",
+    "numGenerations",
+    "splitUtterances",
+    "stripHeaders",
+    "utterances",
+    "instantMode",
+    "format"
+  ],
+  "ReturnTts.init": [
+    "generations",
+    "requestId"
+  ],
+  "FormatPcm.init": [],
+  "Snippet.init": [
+    "id",
+    "text",
+    "generationId",
+    "utteranceIndex",
+    "transcribedText",
+    "audio"
+  ],
+  "SnippetAudioChunk.init": [
+    "generationId",
+    "snippetId",
+    "text",
+    "transcribedText",
+    "chunkIndex",
+    "audio",
+    "audioFormat",
+    "isLastChunk",
+    "utteranceIndex",
+    "snippet"
+  ],
+  "PostedUtterance.init": [
+    "description",
+    "speed",
+    "trailingSilence",
+    "text",
+    "voice"
+  ],
+  "ValidationError.init": [
+    "msg",
+    "type"
+  ],
+  "PostedUtteranceVoiceWithId.init": [
+    "id",
+    "provider"
+  ],
+  "PostedUtteranceVoiceWithName.init": [
+    "name",
+    "provider"
+  ],
+  "FormatWav.init": [],
+  "AssistantInput.init": [
+    "customSessionId",
+    "text"
+  ],
+  "AudioConfiguration.init": [
+    "channels",
+    "encoding",
+    "sampleRate"
+  ],
+  "AudioInput.init": [
+    "customSessionId",
+    "data"
+  ],
+  "BuiltinToolConfig.init": [
+    "fallbackContent",
+    "name"
+  ],
+  "Context.init": [
+    "text",
+    "type"
+  ],
+  "PauseAssistantMessage.init": [
+    "customSessionId"
+  ],
+  "ResumeAssistantMessage.init": [
+    "customSessionId"
+  ],
+  "SessionSettings.init": [
+    "audio",
+    "builtinTools",
+    "context",
+    "customSessionId",
+    "languageModelApiKey",
+    "systemPrompt",
+    "tools"
+  ],
+  "Tool.init": [
+    "description",
+    "fallbackContent",
+    "name",
+    "parameters",
+    "type"
+  ],
+  "ToolErrorMessage.init": [
+    "code",
+    "content",
+    "customSessionId",
+    "error",
+    "level",
+    "toolCallId",
+    "toolType"
+  ],
+  "ToolResponseMessage.init": [
+    "content",
+    "customSessionId",
+    "toolCallId",
+    "toolName",
+    "toolType",
+    "content"
+  ],
+  "UserInput.init": [
+    "customSessionId",
+    "text"
+  ],
+  "AssistantEnd.init": [
+    "customSessionId"
+  ],
+  "AssistantMessage.init": [
+    "customSessionId",
+    "fromText",
+    "id",
+    "message",
+    "models"
+  ],
+  "AssistantProsody.init": [
+    "customSessionId",
+    "id",
+    "models"
+  ],
+  "AudioOutput.init": [
+    "customSessionId",
+    "data",
+    "id",
+    "index"
+  ],
+  "ChatMessage.init": [
+    "content",
+    "role",
+    "toolCall",
+    "toolResult"
+  ],
+  "ChatMetadata.init": [
+    "chatGroupId",
+    "chatId",
+    "customSessionId",
+    "requestId"
+  ],
+  "WebSocketError.init": [
+    "code",
+    "customSessionId",
+    "message",
+    "requestId",
+    "slug"
+  ],
+  "Inference.init": [
+    "prosody"
+  ],
+  "MillisecondInterval.init": [
+    "begin",
+    "end"
+  ],
+  "ProsodyInference.init": [
+    "scores"
+  ],
+  "ToolCallMessage.init": [
+    "name",
+    "parameters",
+    "toolCallId",
+    "customSessionId",
+    "toolType",
+    "responseRequired"
+  ],
+  "UserInterruption.init": [
+    "customSessionId",
+    "time"
+  ],
+  "UserMessage.init": [
+    "customSessionId",
+    "fromText",
+    "interim",
+    "message",
+    "models",
+    "time"
+  ]
+}
