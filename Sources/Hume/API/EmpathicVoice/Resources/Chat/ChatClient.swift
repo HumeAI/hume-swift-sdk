@@ -52,10 +52,11 @@ public class Chat: NSObject {
       components?.queryItems?.append(URLQueryItem(name: "voice_id", value: voiceId))
     }
     if let verboseTranscription = options?.verboseTranscription {
-        components?.queryItems?.append(URLQueryItem(name: "verbose_transcription", value: String(verboseTranscription)))
+      components?.queryItems?.append(
+        URLQueryItem(name: "verbose_transcription", value: String(verboseTranscription)))
     }
     if let eventLimit = options?.eventLimit {
-        components?.queryItems?.append(URLQueryItem(name: "event_limit", value: String(eventLimit)))
+      components?.queryItems?.append(URLQueryItem(name: "event_limit", value: String(eventLimit)))
     }
 
     let url = components!.url!
@@ -81,10 +82,10 @@ public class Chat: NSObject {
     onError: ((Error, URLResponse?) -> Void)? = nil
   ) async throws -> StreamSocket {
     let options = ChatConnectOptions(
-        configId: configId,
-        configVersion: configVersion,
-        resumedChatGroupId: resumedChatGroupId,
-        voiceId: voiceId
+      configId: configId,
+      configVersion: configVersion,
+      resumedChatGroupId: resumedChatGroupId,
+      voiceId: voiceId
     )
     return try await connect(options: options, onOpen: onOpen, onClose: onClose, onError: onError)
   }

@@ -127,9 +127,9 @@ public class VoiceProvider: VoiceProvidable {
     sessionSettings: SessionSettings
   ) async throws {
     let options = ChatConnectOptions(
-        configId: configId,
-        configVersion: configVersion,
-        resumedChatGroupId: resumedChatGroupId
+      configId: configId,
+      configVersion: configVersion,
+      resumedChatGroupId: resumedChatGroupId
     )
     try await connect(options: options, sessionSettings: sessionSettings)
   }
