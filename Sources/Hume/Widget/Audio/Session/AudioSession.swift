@@ -9,9 +9,10 @@ protocol AudioSessionDelegate: AnyObject {
   func audioSessionInterruptionDidEnd(shouldResume: Bool)
 }
 
-class AudioSession {
+actor AudioSession: Sendable {
   private let audioSession = AVAudioSession.sharedInstance()
   internal var lastInputPort: AVAudioSessionPortDescription?
+  private var notificationHandler: AudioSessionNotificationHandler?
 
   static let shared = AudioSession()
 
@@ -21,8 +22,12 @@ class AudioSession {
   @Published var isDeviceSpeakerActive: Bool = false
   weak var delegate: (any AudioSessionDelegate)? = nil
 
-  init() {
-    registerAVObservers()
+  nonisolated init() {
+    setupNotificationHandling()
+  }
+
+  func setDelegate(_ delegate: any AudioSessionDelegate) {
+    self.delegate = delegate
   }
 
   func start() throws {
@@ -80,27 +85,44 @@ class AudioSession {
     }
     Logger.debug(
       "Updating audio session to category: \(category), mode: \(mode), options: \(options)")
-      Logger.debug("Current category options: \(audioSession.categoryOptions.rawValue)")
+    Logger.debug("Current category options: \(audioSession.categoryOptions.rawValue)")
     try audioSession.setCategory(category, mode: mode, options: options)
-      Logger.debug("Updated category options: \(audioSession.categoryOptions.rawValue)")
+    Logger.debug("Updated category options: \(audioSession.categoryOptions.rawValue)")
   }
 
-  private func registerAVObservers() {
-    NotificationCenter.default.addObserver(
-      self,
-      selector: #selector(handleInterruption),
-      name: AVAudioSession.interruptionNotification,
-      object: nil)
-    NotificationCenter.default.addObserver(
-      self,
-      selector: #selector(handleRouteChange),
-      name: AVAudioSession.routeChangeNotification,
-      object: nil)
-    NotificationCenter.default.addObserver(
-      self,
-      selector: #selector(handleConfigurationChange),
-      name: .AVAudioEngineConfigurationChange,
-      object: nil)
+  private func setupNotificationHandling() {
+    let handler = AudioSessionNotificationHandler(
+      onRouteChange: { [weak self] reason in
+        guard let self else { return }
+        Task { [weak self] in
+          guard let self else { return }
+          await self.didReceiveRouteChange(reason: reason)
+        }
+      },
+      onInterruptionBegan: { [weak self] in
+        guard let self else { return }
+        Task { [weak self] in
+          guard let self else { return }
+          await self.didReceiveInterruptionBegan()
+        }
+      },
+      onInterruptionEnded: { [weak self] shouldResume in
+        guard let self else { return }
+        Task { [weak self] in
+          guard let self else { return }
+          await self.didReceiveInterruptionEnded(shouldResume: shouldResume)
+        }
+      },
+      onEngineConfigurationChanged: { [weak self] in
+        guard let self else { return }
+        Task { [weak self] in
+          guard let self else { return }
+          await self.didReceiveEngineConfigurationChange()
+        }
+      }
+    )
+    handler.register()
+    self.notificationHandler = handler
   }
 
   // MARK: - Audio Routing
@@ -120,6 +142,15 @@ class AudioSession {
   }
 
   private func handleAudioRouting() throws {
+    guard activeConfig == .inputOutput else {
+      Logger.info("handleAudioRouting skipped (output-only)")
+      if audioSession.preferredInput != nil {
+        Logger.debug("Clearing preferred input")
+        try audioSession.setPreferredInput(nil)
+      }
+      return
+    }
+
     let ioConfig = try getBestFitAudioPorts()
 
     // Handle speaker override
@@ -167,61 +198,36 @@ class AudioSession {
   }
 }
 
-// MARK: - Notification Handlers
+// MARK: - Notification Handlers (actor-isolated)
 
 extension AudioSession {
-  @objc private func handleConfigurationChange() {
+  private func didReceiveEngineConfigurationChange() {
     self.delegate?.audioEngineDidChangeConfiguration()
   }
 
-  @objc
-  private func handleInterruption(_ notification: Notification) {
-    Logger.debug("Interruption notification received")
-    guard let userInfo = notification.userInfo,
-      let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt,
-      let type = AVAudioSession.InterruptionType(rawValue: typeValue)
-    else {
-      return
-    }
-    switch type {
-    case .began:
-      self.delegate?.audioSessionInterruptionDidBegin()
-    case .ended:
-      guard let optionsValue = userInfo[AVAudioSessionInterruptionOptionKey] as? UInt else {
-        return
-      }
-      let options = AVAudioSession.InterruptionOptions(rawValue: optionsValue)
-      if options.contains(.shouldResume) {
-        self.delegate?.audioSessionInterruptionDidEnd(shouldResume: true)
-      } else {
-        self.delegate?.audioSessionInterruptionDidEnd(shouldResume: false)
-      }
-    @unknown default:
-      Logger.warn("Unhandled interruption type: \(type)")
-    }
+  private func didReceiveInterruptionBegan() {
+    self.delegate?.audioSessionInterruptionDidBegin()
   }
 
-  @objc
-  private func handleRouteChange(_ notification: Notification) {
-    guard let rawReason = notification.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt,
-      let reason = AVAudioSession.RouteChangeReason(rawValue: rawReason)
-    else {
-      Logger.warn("Route change reason is missing")
-      return
-    }
+  private func didReceiveInterruptionEnded(shouldResume: Bool) {
+    self.delegate?.audioSessionInterruptionDidEnd(shouldResume: shouldResume)
+  }
 
+  private func didReceiveRouteChange(reason: AVAudioSession.RouteChangeReason) {
     Logger.info("Route change notification received: \(reason)")
 
     switch reason {
     case .newDeviceAvailable, .oldDeviceUnavailable, .unknown, .wakeFromSleep,
       .routeConfigurationChange:
-      Task {
-        do {
+      do {
+        if self.activeConfig == .inputOutput {
           try handleAudioRouting()
           delegate?.audioSessionRouteDidChange(reason: reason)
-        } catch {
-          Logger.error("Route change error: \(error.localizedDescription)")
+        } else {
+          Logger.info("Skipping routing update in output-only config")
         }
+      } catch {
+        Logger.error("Route change error: \(error.localizedDescription)")
       }
     case .noSuitableRouteForCategory, .override, .categoryChange:
       Logger.info("Skipping route change reason: \(reason)")

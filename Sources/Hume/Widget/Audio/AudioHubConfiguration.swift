@@ -31,8 +31,7 @@ enum AudioHubConfiguration {
         .overrideMutedMicrophoneInterruption,
       ]
     case .outputOnly:
-      // no option necessary
-        return AVAudioSession.CategoryOptions(rawValue: 0)
+      return []
     }
   }
 

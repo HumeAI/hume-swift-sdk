@@ -7,64 +7,69 @@
 
 import AVFoundation
 
-/// Audio player that directly plays a TTS stream from a request
-public protocol TTSPlayer {
-  func playTtsStream(_ request: PostedTts) async throws
-
-  /// Stops the audio player. Call this when navigating away from TTS functionality in your app.
-  func teardown() async throws
+enum TTSError: Error {
+  case uninitializedPlayer
 }
 
 /// Audio player that directly plays a TTS stream from a request. Use this widget for a quick and simple streaming solution.
-public class TTSPlayerImpl: TTSPlayer {
+public class TTSPlayer {
   private var audioHub: AudioHub
-  private var _soundPlayer: SoundPlayer?
-  private let tts: TTS
+  private var _wavPlayer: SoundPlayer?
 
-  public init(audioHub: AudioHub, tts: TTS) {
+  private let defaultFormat: AVAudioFormat = AVAudioFormat(
+    commonFormat: .pcmFormatInt16, sampleRate: 48000, channels: 1, interleaved: false)!
+
+  public init(audioHub: AudioHub) {
     self.audioHub = audioHub
-    self.tts = tts
+    //    self.tts = tts
   }
 
-  public func playTtsStream(_ request: PostedTts) async throws {
-    try await playFileStream(for: request)
-  }
+  public func play(soundClip: SoundClip, format: Format?) async throws {
+    // TODO: decide which format
+    let player: SoundPlayer
+    if let wavFormat = soundClip.header?.asAVAudioFormat {
+      player = try await getWavPlayer(format: wavFormat)
+    } else if let _wavPlayer {
+      player = _wavPlayer
+    } else {
+      throw TTSError.uninitializedPlayer
+    }
 
-  // MARK: - Lifecycle
-
-  public func teardown() async throws {
-    //    try await audioHub.stop()
+    try await audioHub.startEngineIfNeeded()
+    Task {
+      await player.enqueueAudio(soundClip: soundClip)
+    }
   }
 
   // MARK: - Playback
 
-  private func playFileStream(for request: PostedTts) async throws {
-    let stream = tts.synthesizeFileStreaming(request: request)
+  //  private func playFileStream(for request: PostedTts) async throws {
+  //    let stream = tts.synthesizeFileStreaming(request: request)
+  //
+  //    for try await data in stream {
+  //      guard let soundClip = SoundClip.from(data), let format = soundClip.header?.asAVAudioFormat
+  //      else {
+  //        Logger.warn("failed to create sound clip")
+  //        return
+  //      }
+  //
+  //      let soundPlayer = try await getSoundPlayer(format: format)
+  //
+  //      try await soundPlayer.enqueueAudio(soundClip: soundClip)
+  //
+  //    }
+  //  }
 
-    for try await data in stream {
-      guard let soundClip = SoundClip.from(data), let format = soundClip.header?.asAVAudioFormat
-      else {
-        Logger.warn("failed to create sound clip")
-        return
-      }
-
-      let soundPlayer = try await getSoundPlayer(format: format)
-
-      try await soundPlayer.enqueueAudio(soundClip: soundClip)
-
-    }
-  }
-
-  private func getSoundPlayer(format: AVAudioFormat) async throws -> SoundPlayer {
-    if let _soundPlayer, await _soundPlayer.format == format {
-      return _soundPlayer
-    } else if let _soundPlayer, await _soundPlayer.format != format {
+  private func getWavPlayer(format: AVAudioFormat) async throws -> SoundPlayer {
+    if let _wavPlayer, await _wavPlayer.format == format {
+      return _wavPlayer
+    } else if let _wavPlayer, await _wavPlayer.format != format {
       Logger.debug("SoundPlayer format mismatch, detaching old node")
-      try await audioHub.detachNode(_soundPlayer.audioSourceNode)
+      try await audioHub.detachNode(_wavPlayer.audioSourceNode)
     }
     Logger.debug("Creating new SoundPlayer with format \(format.prettyPrinted)")
-    _soundPlayer = SoundPlayer(format: format)
-    try await audioHub.addNode(_soundPlayer!.audioSourceNode, format: format)
-    return _soundPlayer!
+    _wavPlayer = SoundPlayer(format: format)
+    try await audioHub.addNode(_wavPlayer!.audioSourceNode, format: format)
+    return _wavPlayer!
   }
 }

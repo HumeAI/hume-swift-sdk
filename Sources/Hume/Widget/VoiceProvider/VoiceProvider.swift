@@ -159,7 +159,6 @@ public class VoiceProvider: VoiceProvidable {
 
     await self.audioHub.stopMicrophone()
     await _soundPlayer?.clearQueue()
-    _soundPlayer = nil
     self.eventSubscription?.cancel()
     self.socket?.close()
     Logger.info("Voice provider disconnected")
