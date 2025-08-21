@@ -29,11 +29,8 @@ import {
   type SDKMethodParam,
   type SDKMethod,
   type File,
-  renderNamespaceClient,
-  renderResourceClient,
-  renderSwiftDefinition,
-  swiftFormat,
-} from "./swift";
+  SwiftRenderer,
+} from "./swift_renderer";
 import path from "path";
 import fs from "fs/promises";
 
@@ -156,20 +153,20 @@ type Back<T, TStep> = {
 
 type Step =
   | {
-      kind: "property";
-      name: string;
-      parentSchemaName?: string;
-    }
+    kind: "property";
+    name: string;
+    parentSchemaName?: string;
+  }
   | {
-      kind: "nullable";
-    }
+    kind: "nullable";
+  }
   | {
-      kind: "variant";
-      i: number;
-    }
+    kind: "variant";
+    i: number;
+  }
   | {
-      kind: "array";
-    };
+    kind: "array";
+  };
 
 const surroundingPropertyName = (
   back: Back<JsonSchema, Step> | null,
@@ -640,9 +637,13 @@ const schemaToSwiftType = (
     case "stringOrInteger":
       return todo("stringOrInteger not implemented yet");
     case "stringNumberBool":
-      return todo("stringNumberBool not implemented yet");
+      // For simplicity, just use String instead of a complex union
+      console.log("Using String type for stringNumberBool for simplicity");
+      return result({ type: "String" }, {});
     case "object": {
       const name = swiftName(schema);
+
+
 
       const defs: Record<string, SwiftDefinition> = {};
       const rawProperties: Array<{
@@ -658,9 +659,6 @@ const schemaToSwiftType = (
             constValue?: string;
             isCommentedOut?: boolean;
           } | null => {
-            if (propName == "prosody") {
-              console.log(prop);
-            }
             if (prop.kind === "ignored") {
               return null;
             }
@@ -849,12 +847,12 @@ const openapiOperationToSDKMethod = (
   } else {
     const { expr } = successResponseSchema
       ? schemaToSwiftType(
-          successResponseSchema,
-          lookupSchema,
-          null,
-          "received",
-          namespace,
-        )
+        successResponseSchema,
+        lookupSchema,
+        null,
+        "received",
+        namespace,
+      )
       : { expr: { type: "void" as const } };
     returnType = expr;
   }
@@ -975,11 +973,14 @@ const buildSwiftSdk = (specs: OA.KnownSpecs): SwiftSDK => {
   const allSchemas: Record<string, JsonSchema> = {};
 
   // Add TTS schemas with tts: prefix
+
   for (const [key, schema] of Object.entries(specs.tts.components.schemas)) {
     const prefixedKey = `tts:${key}`;
     allSchemas[prefixedKey] = schema;
     // Update the schemaKey to maintain traceability
     (schema as any).schemaKey = prefixedKey;
+    
+
   }
 
   // Add EVI AsyncAPI schemas with evi: prefix
@@ -990,7 +991,11 @@ const buildSwiftSdk = (specs: OA.KnownSpecs): SwiftSDK => {
     allSchemas[prefixedKey] = schema;
     // Update the schemaKey to maintain traceability
     (schema as any).schemaKey = prefixedKey;
+    
+
   }
+
+  // Note: StringNumberBool is now handled directly as String type for simplicity
 
   // Create a lookup function that handles special cases and renames
   const lookupSchema = (
@@ -1065,16 +1070,24 @@ const buildSwiftSdk = (specs: OA.KnownSpecs): SwiftSDK => {
     schemaToNamespace.set(`tts:${schemaKey}`, "tts");
   }
 
+  // StringNumberBool is now handled directly as String, no special namespace needed
+
   // ==== MAIN LOGIC: Step 3: Definitions ====
   // We now walk through all the schemas and add them to the SDK as definitions.
   // We also add any special cases (like EmotionScores) as definitions.
 
+      
+  
   Object.entries(allSchemas).forEach(([name, schema]) => {
     if (schema.kind === "ignored") {
       return;
     }
 
     const schemaKey = (schema as any).schemaKey;
+
+    // StringNumberBool is now handled directly as String for simplicity
+
+
 
     // Skip schemas without schemaKey (these are typically internal schemas not meant for generation)
     if (schemaKey === undefined) {
@@ -1102,6 +1115,7 @@ const buildSwiftSdk = (specs: OA.KnownSpecs): SwiftSDK => {
 
     // Skip orphaned schemas (schemas that are not referenced by any endpoints)
     if (direction === "orphaned") {
+      console.log(`Skipping orphaned schema: ${schemaKey}`);
       return;
     }
 
@@ -1149,6 +1163,8 @@ const buildSwiftSdk = (specs: OA.KnownSpecs): SwiftSDK => {
     });
   });
 
+
+
   return sdk;
 };
 
@@ -1189,9 +1205,10 @@ const clearGeneratedFiles = async (basePath: string) => {
   return deletedCount;
 };
 
-const writeSwiftSdk = async (sdk: SwiftSDK, basePath: string) => {
+const writeSwiftSdk = async (sdk: SwiftSDK, renderer: SwiftRenderer, basePath: string) => {
   // Delete all existing generated files before writing new ones
   const deletedCount = await clearGeneratedFiles(basePath);
+
 
   const writeFile = async (file: File) => {
     await fs.mkdir(path.dirname(file.path), { recursive: true });
@@ -1205,7 +1222,7 @@ const writeSwiftSdk = async (sdk: SwiftSDK, basePath: string) => {
     ([namespaceName, namespace]: [string, any]) => {
       if (namespace.resourceClients.length > 0) {
         files.push(
-          renderNamespaceClient(
+          renderer.renderNamespaceClient(
             namespaceName,
             namespace.resourceClients.map((rc: any) => rc.name),
             basePath,
@@ -1216,7 +1233,7 @@ const writeSwiftSdk = async (sdk: SwiftSDK, basePath: string) => {
       // Write resource clients
       namespace.resourceClients.forEach((resourceClient: any) => {
         files.push(
-          renderResourceClient(
+          renderer.renderResourceClient(
             namespaceName,
             resourceClient.name,
             resourceClient.methods,
@@ -1227,7 +1244,7 @@ const writeSwiftSdk = async (sdk: SwiftSDK, basePath: string) => {
 
       // Write definitions
       namespace.definitions.forEach((def: SwiftDefinition) => {
-        files.push(renderSwiftDefinition(namespaceName, def, basePath));
+        files.push(renderer.renderSwiftDefinition(namespaceName, def, basePath));
       });
     },
   );
@@ -1258,7 +1275,7 @@ const writeSwiftSdk = async (sdk: SwiftSDK, basePath: string) => {
     swiftFiles.map(async (file) => {
       try {
         const fileContent = await fs.readFile(file.path, "utf-8");
-        const formatted = await swiftFormat(fileContent);
+        const formatted = await renderer.swiftFormat(fileContent);
         await fs.writeFile(file.path, formatted);
       } catch (error) {
         console.warn(`Warning: Could not format ${file.path}:`, error);
@@ -1288,6 +1305,8 @@ const main = async () => {
 Options:
   --target-dir <path>  Base directory for generated files (default: ../)
                        Files will be generated to <path>/Sources/Hume
+  --update-orderings   Update orderings.json to take into account new
+                       and removed parameters
   --help, -h           Show this help message
   
 Examples:
@@ -1302,6 +1321,8 @@ Examples:
     basePath = args[targetDirIndex + 1];
   }
 
+  const shouldUpdateOrderings = args.includes("--update-orderings");
+
   console.log(`Generating Swift SDK to: ${basePath}/Sources/Hume`);
 
   const specs = await OA.readKnownSpecs();
@@ -1315,7 +1336,20 @@ Examples:
   // Verify that collisions are resolved
   detectNamingCollisions(renamedSdk);
 
-  const stats = await writeSwiftSdk(renamedSdk, basePath);
+  const ORDERINGS_PATH = `${__dirname}/orderings.json`;
+  const renderer = new SwiftRenderer(JSON.parse(await fs.readFile(ORDERINGS_PATH, "utf-8")));
+  const stats = await writeSwiftSdk(renamedSdk, renderer, basePath);
+  try {
+    renderer.checkOrderingDiscrepancies(ORDERINGS_PATH)
+  } catch (e) {
+    if (shouldUpdateOrderings) {
+      console.info(`Orderings discrepancies found but --update-orderings was supplied updating orderings.json`);
+      await fs.writeFile(ORDERINGS_PATH, JSON.stringify(renderer.fixedOrderings, null, 2));
+    } else {
+      console.error(`Orderings discrepancies found. Pass --update-orderings to automatically update orderings.json`);
+      throw e
+    }
+  }
 
   console.log(`\nFile generation statistics:`);
   console.log(`  Total files written: ${stats.totalFiles}`);

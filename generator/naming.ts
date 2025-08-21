@@ -1,7 +1,7 @@
 import * as OA from "./parse_openapi";
 import type { JsonSchema } from "./parse_openapi";
 import { camelCase, pascalCase } from "change-case";
-import type { SwiftType, SwiftDefinition } from "./swift";
+import type { SwiftType, SwiftDefinition } from "./swift_renderer";
 import type { SwiftSDK, Endpoint } from "./generator";
 import type { Namespace } from "./namespaces";
 
@@ -100,6 +100,10 @@ export const swiftName = (schema: JsonSchema, surroundingName?: string): string 
     return normalizeObjectName(
       schema.schemaKey ?? surroundingName ?? fail(),
     );
+  }
+
+  if (schema.kind === "stringNumberBool") {
+    return "StringNumberBool";
   }
 
   throw new Error(
