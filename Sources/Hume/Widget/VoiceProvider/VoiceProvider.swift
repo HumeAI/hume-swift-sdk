@@ -82,7 +82,7 @@ public class VoiceProvider: VoiceProvidable {
       Task {
         self.socket = try? await self.humeClient.empathicVoice.chat
           .connect(
-            options: options,
+            with: options,
             onOpen: { [weak self] response in
               Logger.info("Socket Opened")
               guard let self = self else { return }
@@ -127,9 +127,9 @@ public class VoiceProvider: VoiceProvidable {
     sessionSettings: SessionSettings
   ) async throws {
     let options = ChatConnectOptions(
-      configId: configId,
-      configVersion: configVersion,
-      resumedChatGroupId: resumedChatGroupId
+        configId: configId,
+        configVersion: configVersion,
+        resumedChatGroupId: resumedChatGroupId
     )
     try await connect(options: options, sessionSettings: sessionSettings)
   }
@@ -309,7 +309,8 @@ extension VoiceProvider {
         --Received metadata response--
         Chat ID: \(response.chatId)
         Chat Group ID: \(response.chatGroupId)
-        """)
+        """
+      )
       Task {
         completeConnectionSetup()
       }
