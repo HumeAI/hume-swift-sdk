@@ -50,16 +50,14 @@ public class VoiceProvider: VoiceProvidable {
 
   /// Starts a connection with EVI.
   /// - Parameters:
-  ///   - configId: The unique identifier for an EVI configuration.
-  ///   - configVersion: Include this parameter to apply a specific version of an EVI configuration. If omitted, the latest version will be applied.
-  ///   - resumedChatGroupId: The unique identifier for a Chat Group. Use this field to preserve context from a previous Chat session.
+  ///   - options: The connection options for the chat.
   ///   - sessionSettings: Defines the session settings for the connection. Setting the `audio` configuration to `nil` will enable `VoiceProvider` to configure this automatically.
   public func connect(
-    configId: String?, configVersion: String?, resumedChatGroupId: String?,
+    options: ChatConnectOptions?,
     sessionSettings: SessionSettings
   ) async throws {
     Logger.info(
-      "Connecting voice provider. configId: \(String(describing: configId)), configVersion: \(String(describing: configVersion)), resumedChatGroupId: \(String(describing: resumedChatGroupId))"
+      "Connecting voice provider. options: \(String(describing: options))"
     )
     if stateSubject.value == .disconnecting {
       // need to wait to finish disconnecting
@@ -84,9 +82,7 @@ public class VoiceProvider: VoiceProvidable {
       Task {
         self.socket = try? await self.humeClient.empathicVoice.chat
           .connect(
-            configId: configId,
-            configVersion: configVersion,
-            resumedChatGroupId: resumedChatGroupId,
+            options: options,
             onOpen: { [weak self] response in
               Logger.info("Socket Opened")
               guard let self = self else { return }
@@ -117,6 +113,25 @@ public class VoiceProvider: VoiceProvidable {
           )
       }
     }
+  }
+
+  /// Starts a connection with EVI.
+  /// - Parameters:
+  ///   - configId: The unique identifier for an EVI configuration.
+  ///   - configVersion: Include this parameter to apply a specific version of an EVI configuration. If omitted, the latest version will be applied.
+  ///   - resumedChatGroupId: The unique identifier for a Chat Group. Use this field to preserve context from a previous Chat session.
+  ///   - sessionSettings: Defines the session settings for the connection. Setting the `audio` configuration to `nil` will enable `VoiceProvider` to configure this automatically.
+  @available(*, deprecated, message: "Use connect(options:sessionSettings:) instead")
+  public func connect(
+    configId: String?, configVersion: String?, resumedChatGroupId: String?,
+    sessionSettings: SessionSettings
+  ) async throws {
+    let options = ChatConnectOptions(
+        configId: configId,
+        configVersion: configVersion,
+        resumedChatGroupId: resumedChatGroupId
+    )
+    try await connect(options: options, sessionSettings: sessionSettings)
   }
 
   private func completeConnectionSetup() {

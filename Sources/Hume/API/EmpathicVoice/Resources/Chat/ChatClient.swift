@@ -20,10 +20,7 @@ public class Chat: NSObject {
   }
 
   public func connect(
-    configId: String? = nil,
-    configVersion: String? = nil,
-    resumedChatGroupId: String? = nil,
-    voiceId: String? = nil,
+    options: ChatConnectOptions? = nil,
     onOpen: ((URLResponse?) -> Void)? = nil,
     onClose: ((Int, String?) -> Void)? = nil,
     onError: ((Error, URLResponse?) -> Void)? = nil
@@ -36,24 +33,29 @@ public class Chat: NSObject {
     let host: String = SDKConfiguration.default.host
 
     var components = URLComponents(string: "wss://\(host)/v0/evi/chat")
-    let accessToken = try await AccessTokenResolver.resolve(options: options)
+    let accessToken = try await AccessTokenResolver.resolve(options: self.options)
 
     components?.queryItems = [
-      URLQueryItem(name: "accessToken", value: accessToken),
-      URLQueryItem(name: "verbose_transcription", value: String(true)),
+      URLQueryItem(name: "accessToken", value: accessToken)
     ]
-    if let configId {
+    if let configId = options?.configId {
       components?.queryItems?.append(URLQueryItem(name: "config_id", value: configId))
     }
-    if let configVersion {
+    if let configVersion = options?.configVersion {
       components?.queryItems?.append(URLQueryItem(name: "config_version", value: configVersion))
     }
-    if let resumedChatGroupId {
+    if let resumedChatGroupId = options?.resumedChatGroupId {
       components?.queryItems?.append(
         URLQueryItem(name: "resumed_chat_group_id", value: resumedChatGroupId))
     }
-    if let voiceId {
+    if let voiceId = options?.voiceId {
       components?.queryItems?.append(URLQueryItem(name: "voice_id", value: voiceId))
+    }
+    if let verboseTranscription = options?.verboseTranscription {
+        components?.queryItems?.append(URLQueryItem(name: "verbose_transcription", value: String(verboseTranscription)))
+    }
+    if let eventLimit = options?.eventLimit {
+        components?.queryItems?.append(URLQueryItem(name: "event_limit", value: String(eventLimit)))
     }
 
     let url = components!.url!
@@ -68,6 +70,24 @@ public class Chat: NSObject {
     return StreamSocket(webSocketTask: webSocketTask)
   }
 
+  @available(*, deprecated, message: "Use connect(options:onOpen:onClose:onError:) instead")
+  public func connect(
+    configId: String? = nil,
+    configVersion: String? = nil,
+    resumedChatGroupId: String? = nil,
+    voiceId: String? = nil,
+    onOpen: ((URLResponse?) -> Void)? = nil,
+    onClose: ((Int, String?) -> Void)? = nil,
+    onError: ((Error, URLResponse?) -> Void)? = nil
+  ) async throws -> StreamSocket {
+    let options = ChatConnectOptions(
+        configId: configId,
+        configVersion: configVersion,
+        resumedChatGroupId: resumedChatGroupId,
+        voiceId: voiceId
+    )
+    return try await connect(options: options, onOpen: onOpen, onClose: onClose, onError: onError)
+  }
 }
 
 extension Chat: URLSessionWebSocketDelegate {
