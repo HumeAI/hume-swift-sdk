@@ -21,7 +21,7 @@ public actor SoundPlayer: Sendable {
   private var meteringCallback: ((Float) -> Void)?
 
   // MARK: - Initialization
-  init(format: AVAudioFormat) {
+  public init(format: AVAudioFormat) {
     self.rawAudioPlayer = RawAudioPlayer(format: format)
   }
 
