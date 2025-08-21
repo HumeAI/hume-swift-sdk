@@ -37,6 +37,10 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
+
+    - name: List available simulators
+      run: |
+        xcrun simctl list
     
     - name: Build for iOS device
       run: |
@@ -44,7 +48,7 @@ jobs:
         
     - name: Run tests on iOS Simulator
       run: |
-        xcodebuild test -scheme Hume-Package -destination 'platform=iOS Simulator,name=iPhone 15'
+        xcodebuild test -scheme Hume-Package -destination 'platform=iOS Simulator,name=iPhone 15 Pro'
 
     - name: Lint podspec
       run: |
