@@ -50,10 +50,10 @@ public class VoiceProvider: VoiceProvidable {
 
   /// Starts a connection with EVI.
   /// - Parameters:
-  ///   - options: The connection options for the chat.
+  ///   - with: The connection options for the chat.
   ///   - sessionSettings: Defines the session settings for the connection. Setting the `audio` configuration to `nil` will enable `VoiceProvider` to configure this automatically.
   public func connect(
-    options: ChatConnectOptions?,
+    with options: ChatConnectOptions?,
     sessionSettings: SessionSettings
   ) async throws {
     Logger.info(
@@ -131,7 +131,7 @@ public class VoiceProvider: VoiceProvidable {
         configVersion: configVersion,
         resumedChatGroupId: resumedChatGroupId
     )
-    try await connect(options: options, sessionSettings: sessionSettings)
+    try await connect(with: options, sessionSettings: sessionSettings)
   }
 
   private func completeConnectionSetup() {
