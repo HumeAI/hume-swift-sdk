@@ -5,6 +5,7 @@
 //  Created by Chris on 6/30/25.
 //
 
+import AVFoundation
 import Foundation
 
 public struct WAVHeader {
@@ -22,5 +23,16 @@ public struct WAVHeader {
 extension WAVHeader {
   var isValid: Bool {
     return chunkID == "RIFF" && format == "WAVE"
+  }
+}
+
+// MARK: - AVFoundation Extensions
+extension WAVHeader {
+  var asAVAudioFormat: AVAudioFormat? {
+    AVAudioFormat(
+      commonFormat: Constants.DefaultAudioFormat.commonFormat,
+      sampleRate: Double(self.sampleRate),
+      channels: AVAudioChannelCount(self.numChannels),
+      interleaved: self.numChannels > 1)
   }
 }

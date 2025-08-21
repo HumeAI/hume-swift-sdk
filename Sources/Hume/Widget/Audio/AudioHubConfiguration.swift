@@ -8,46 +8,37 @@
 import AVFoundation
 import Foundation
 
-public enum AudioHubConfiguration {
-  case voiceChat
-  case tts
+enum AudioHubConfiguration {
+  case inputOutput
+  case outputOnly
 
   internal var category: AVAudioSession.Category {
     switch self {
-    case .voiceChat:
+    case .inputOutput:
       return .playAndRecord
-    case .tts:
+    case .outputOnly:
       return .playback
     }
   }
 
   internal var options: AVAudioSession.CategoryOptions {
     switch self {
-    case .voiceChat:
+    case .inputOutput:
       return [
         .allowBluetooth,
         .allowBluetoothA2DP,
-        .allowAirPlay,
         .defaultToSpeaker,
         .overrideMutedMicrophoneInterruption,
       ]
-    case .tts:
-      // no option necessary
+    case .outputOnly:
       return []
     }
   }
 
   internal var mode: AVAudioSession.Mode {
     switch self {
-    case .voiceChat: .videoChat
-    case .tts: .moviePlayback
-    }
-  }
-
-  internal var requiresMicrophone: Bool {
-    switch self {
-    case .voiceChat: true
-    case .tts: false
+    case .inputOutput: .videoChat
+    case .outputOnly: .moviePlayback
     }
   }
 }
