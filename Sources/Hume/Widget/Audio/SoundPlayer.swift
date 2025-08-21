@@ -10,7 +10,7 @@ public actor SoundPlayer: Sendable {
   // MARK: - Public Properties
   var format: AVAudioFormat { rawAudioPlayer.format }
 
-  var audioSourceNode: AVAudioSourceNode {
+  public var audioSourceNode: AVAudioSourceNode {
     rawAudioPlayer.meteredSourceNode.sourceNode
   }
 
