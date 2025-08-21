@@ -140,7 +140,7 @@ class NetworkingServiceImpl: NSObject, NetworkingService {
           }
         },
         onResponse: { response in
-          Logger.debug("stream response: \(response)")
+          Logger.debug("stream response: \(String(describing: response))")
         },
         onComplete: { error in
           if let error = error {
