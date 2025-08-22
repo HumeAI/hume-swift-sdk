@@ -10,7 +10,7 @@ public actor SoundPlayer: Sendable {
   // MARK: - Public Properties
   var format: AVAudioFormat { rawAudioPlayer.format }
 
-  var audioSourceNode: AVAudioSourceNode {
+  public var audioSourceNode: AVAudioSourceNode {
     rawAudioPlayer.meteredSourceNode.sourceNode
   }
 
@@ -21,7 +21,7 @@ public actor SoundPlayer: Sendable {
   private var meteringCallback: ((Float) -> Void)?
 
   // MARK: - Initialization
-  init(format: AVAudioFormat) {
+  public init(format: AVAudioFormat) {
     self.rawAudioPlayer = RawAudioPlayer(format: format)
   }
 
