@@ -6,10 +6,11 @@
 //
 
 import Hume
+
 #if HUME_SERVER
 
-extension HumeClient {
+  extension HumeClient {
     static var isRunningOnServer: Bool { true }
-        
-}
+
+  }
 #endif

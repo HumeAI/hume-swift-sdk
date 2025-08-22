@@ -19,8 +19,8 @@ let package = Package(
       targets: ["HumeTestingUtils"]
     ),
     .library(
-        name: "HumeServer",
-        targets: ["HumeServer"]
+      name: "HumeServer",
+      targets: ["HumeServer"]
     ),
   ],
   targets: [
@@ -36,11 +36,11 @@ let package = Package(
       dependencies: ["Hume"]
     ),
     .target(
-        name: "HumeServer",
-        dependencies: ["Hume"],
-        swiftSettings: [
-            .define("HUME_SERVER", .when(platforms: [.macOS, .linux]))
-        ]
+      name: "HumeServer",
+      dependencies: ["Hume"],
+      swiftSettings: [
+        .define("HUME_SERVER", .when(platforms: [.macOS, .linux]))
+      ]
     ),
   ]
 )
