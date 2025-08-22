@@ -43,7 +43,7 @@ internal final class Microphone: NSObject {
 
     // initialize audio engine and nodes
     inputNode = audioEngine.inputNode
-    inputFormat = inputNode.inputFormat(forBus: 0)
+    inputFormat = inputNode.outputFormat(forBus: 0)
     let outputNode = audioEngine.outputNode
 
     // sink node to listen for realtime input
