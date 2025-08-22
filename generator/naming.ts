@@ -66,7 +66,7 @@ export const swiftName = (schema: JsonSchema, surroundingName?: string): string 
     return normalizeObjectName(
       schema["x-fern-type-name"] ??
       schema.title ??
-      schema.schemaKey ?? fail());
+      schema.schemaKey ?? surroundingName ?? fail());
   }
   if (schema.kind === "discriminatedUnion") {
     return schema.title ? schema.title : fail();
@@ -130,6 +130,7 @@ const typeRenames: Record<string, Record<string, string>> = {
   },
   VoiceProvider: {
     tts: "TTSVoiceProvider",
+    empathicVoice: "Provider",
   },
   Voice: {
     tts: "Voice",

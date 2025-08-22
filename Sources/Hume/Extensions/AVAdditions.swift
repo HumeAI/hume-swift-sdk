@@ -8,6 +8,7 @@
 
 import AVFoundation
 
+#if os(iOS)
 // MARK: - Microphone permissions
 public enum MicrophonePermission {
   case undetermined
@@ -57,6 +58,7 @@ extension AVAudioSession.RecordPermission {
     }
   }
 }
+#endif
 
 // MARK: - Pretty printing
 // Protocol declaration

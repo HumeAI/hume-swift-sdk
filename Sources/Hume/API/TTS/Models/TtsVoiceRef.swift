@@ -23,14 +23,4 @@ public enum TtsVoiceRef: Codable, Hashable {
       )
     }
   }
-
-  public func encode(to encoder: Encoder) throws {
-    var container = encoder.singleValueContainer()
-    switch self {
-    case .postedUtteranceVoiceWithId(let withId):
-      try container.encode(withId)
-    case .postedUtteranceVoiceWithName(let withName):
-      try container.encode(withName)
-    }
-  }
 }

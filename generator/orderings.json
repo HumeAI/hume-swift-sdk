@@ -75,6 +75,219 @@
     "provider"
   ],
   "FormatWav.init": [],
+  "VoiceId.init": [
+    "id",
+    "provider"
+  ],
+  "VoiceName.init": [
+    "name",
+    "provider"
+  ],
+  "EviReturnUserDefinedTool.init": [
+    "toolType",
+    "id",
+    "version",
+    "versionType",
+    "versionDescription",
+    "name",
+    "createdOn",
+    "modifiedOn",
+    "fallbackContent",
+    "description",
+    "parameters"
+  ],
+  "ReturnPrompt.init": [
+    "id",
+    "version",
+    "versionType",
+    "versionDescription",
+    "name",
+    "createdOn",
+    "modifiedOn",
+    "text"
+  ],
+  "EviReturnPagedConfigs.init": [
+    "pageNumber",
+    "pageSize",
+    "totalPages",
+    "configsPage"
+  ],
+  "EviPostedConfig.init": [
+    "eviVersion",
+    "name",
+    "versionDescription",
+    "prompt",
+    "voice",
+    "languageModel",
+    "ellmModel",
+    "tools",
+    "builtinTools",
+    "eventMessages",
+    "nudges",
+    "timeouts",
+    "webhooks"
+  ],
+  "ReturnConfig.init": [
+    "id",
+    "version",
+    "eviVersion",
+    "versionDescription",
+    "name",
+    "createdOn",
+    "modifiedOn",
+    "prompt",
+    "voice",
+    "languageModel",
+    "ellmModel",
+    "tools",
+    "builtinTools",
+    "eventMessages",
+    "timeouts",
+    "nudges",
+    "webhooks"
+  ],
+  "EviPostedConfigVersion.init": [
+    "eviVersion",
+    "versionDescription",
+    "prompt",
+    "voice",
+    "languageModel",
+    "ellmModel",
+    "tools",
+    "builtinTools",
+    "eventMessages",
+    "timeouts",
+    "nudges",
+    "webhooks"
+  ],
+  "EviPostedConfigName.init": [
+    "name"
+  ],
+  "EviPostedConfigVersionDescription.init": [
+    "versionDescription"
+  ],
+  "EviReturnPrompt.init": [
+    "name",
+    "id",
+    "text",
+    "version",
+    "versionDescription",
+    "versionType",
+    "createdOn",
+    "modifiedOn"
+  ],
+  "EviReturnConfig.init": [
+    "name",
+    "id",
+    "version",
+    "tools",
+    "versionDescription",
+    "languageModel",
+    "builtinTools",
+    "eviVersion",
+    "timeouts",
+    "nudges",
+    "eventMessages",
+    "ellmModel",
+    "voice",
+    "prompt",
+    "webhooks",
+    "createdOn",
+    "modifiedOn"
+  ],
+  "EviPostedConfigPromptSpec.init": [
+    "id",
+    "version",
+    "text"
+  ],
+  "EviPostedLanguageModel.init": [
+    "modelProvider",
+    "modelResource",
+    "temperature"
+  ],
+  "EviPostedEllmModel.init": [
+    "allowShortResponses"
+  ],
+  "EviPostedUserDefinedToolSpec.init": [
+    "id",
+    "version"
+  ],
+  "EviPostedBuiltinTool.init": [
+    "name",
+    "fallbackContent"
+  ],
+  "EviPostedEventMessageSpecs.init": [
+    "onNewChat",
+    "onInactivityTimeout",
+    "onMaxDurationTimeout"
+  ],
+  "EviPostedNudgeSpec.init": [
+    "enabled",
+    "intervalSecs"
+  ],
+  "Inactivity.init": [
+    "durationSecs",
+    "enabled"
+  ],
+  "MaxDuration.init": [
+    "durationSecs",
+    "enabled"
+  ],
+  "EviPostedTimeoutSpecs.init": [
+    "inactivity",
+    "maxDuration"
+  ],
+  "EviPostedWebhookSpec.init": [
+    "url",
+    "events"
+  ],
+  "EviReturnLanguageModel.init": [
+    "modelProvider",
+    "modelResource",
+    "temperature"
+  ],
+  "EviReturnEllmModel.init": [
+    "allowShortResponses"
+  ],
+  "EviReturnBuiltinTool.init": [
+    "toolType",
+    "name",
+    "fallbackContent"
+  ],
+  "EviReturnEventMessageSpecs.init": [
+    "onNewChat",
+    "onInactivityTimeout",
+    "onMaxDurationTimeout"
+  ],
+  "EviReturnTimeoutSpecs.init": [
+    "inactivity",
+    "maxDuration"
+  ],
+  "EviReturnNudgeSpec.init": [
+    "enabled",
+    "intervalSecs"
+  ],
+  "ReturnWebhookSpec.init": [
+    "url",
+    "events"
+  ],
+  "EviPostedEventMessageSpec.init": [
+    "enabled",
+    "text"
+  ],
+  "EviReturnEventMessageSpec.init": [
+    "enabled",
+    "text"
+  ],
+  "EviReturnTimeoutSpec.init": [
+    "enabled",
+    "durationSecs"
+  ],
+  "EviReturnVoice.init": [
+    "id",
+    "name",
+    "provider"
+  ],
   "AssistantInput.init": [
     "customSessionId",
     "text"

@@ -641,7 +641,13 @@ const schemaToSwiftType = (
       console.log("Using String type for stringNumberBool for simplicity");
       return result({ type: "String" }, {});
     case "object": {
-      const name = swiftName(schema);
+      let name = ""
+      try {
+       name = swiftName(schema, surroundingPropertyName(back));
+      } catch (e) {
+        console.log({schema, back, surroundingSchemaName: surroundingSchemaName(back), surroundingPropertyName: surroundingPropertyName(back)});
+        throw e
+      }
 
 
 
@@ -853,7 +859,7 @@ const openapiOperationToSDKMethod = (
         "received",
         namespace,
       )
-      : { expr: { type: "void" as const } };
+      : { expr: { type: "EmptyResponse" as const } };
     returnType = expr;
   }
 
@@ -942,7 +948,7 @@ const buildSwiftSdk = (specs: OA.KnownSpecs): SwiftSDK => {
 
   // First we collect everything: endpoints, schemas, and messages
 
-  const allEndpoints: Array<Endpoint> = [specs.tts]
+  const allEndpoints: Array<Endpoint> = [specs.tts, specs.evi]
     .flatMap((api) => {
       const pathEntries = Object.entries(api.paths);
       return pathEntries.flatMap(
@@ -963,7 +969,18 @@ const buildSwiftSdk = (specs: OA.KnownSpecs): SwiftSDK => {
     // but it's more straightforward for now to just exclude the voices endpoints (which are the only non-access-token REST endpoints under /v0tts)
     // and we also don't include the evi-openapi spec (which has all the resources like /v0/evi/configs and /v0/evi/tools which are non-access-token)
     // and only include the evi-asyncapi spec (which has the access-token-accessible /v0/evi/chat websocket)
-    .filter(({ path }) => !path.startsWith("/v0/tts/voices"));
+    .filter(({ path }) => {
+      if (path.startsWith("/v0/tts/voices")) {
+        return false
+      }
+      if (path.startsWith("/v0/tts")) {
+        return true
+      }
+      if (path.startsWith("/v0/evi/configs")) {
+        return true
+      }
+      return false
+    });
 
   const collectedByResourceName: Record<string, Array<Endpoint>> = _.groupBy(
     allEndpoints,
@@ -979,8 +996,14 @@ const buildSwiftSdk = (specs: OA.KnownSpecs): SwiftSDK => {
     allSchemas[prefixedKey] = schema;
     // Update the schemaKey to maintain traceability
     (schema as any).schemaKey = prefixedKey;
-    
+  }
 
+  // Add EVI OpenAPI schemas with evi: prefix
+  for (const [key, schema] of Object.entries(specs.evi.components.schemas)) {
+    const prefixedKey = `evi:${key}`;
+    allSchemas[prefixedKey] = schema;
+    // Update the schemaKey to maintain traceability
+    (schema as any).schemaKey = prefixedKey;
   }
 
   // Add EVI AsyncAPI schemas with evi: prefix
@@ -1066,6 +1089,11 @@ const buildSwiftSdk = (specs: OA.KnownSpecs): SwiftSDK => {
     schemaToNamespace.set(`evi:${schemaKey}`, "empathicVoice");
   }
 
+  // Set namespace for EVI OpenAPI schemas
+  for (const schemaKey in specs.evi.components.schemas) {
+    schemaToNamespace.set(`evi:${schemaKey}`, "empathicVoice");
+  }
+
   for (const schemaKey in specs.tts.components.schemas) {
     schemaToNamespace.set(`tts:${schemaKey}`, "tts");
   }
@@ -1076,8 +1104,8 @@ const buildSwiftSdk = (specs: OA.KnownSpecs): SwiftSDK => {
   // We now walk through all the schemas and add them to the SDK as definitions.
   // We also add any special cases (like EmotionScores) as definitions.
 
-      
-  
+
+
   Object.entries(allSchemas).forEach(([name, schema]) => {
     if (schema.kind === "ignored") {
       return;

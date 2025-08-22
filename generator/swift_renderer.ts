@@ -15,6 +15,7 @@ export type SwiftType =
   | { type: "Reference"; name: string }
   | { type: "Dictionary"; key: SwiftType; value: SwiftType }
   | { type: "void" }
+  | { type: "EmptyResponse" }
   | { type: "Data" }
   | { type: "TODO"; message: string };
 
@@ -501,6 +502,8 @@ extension Endpoint where Response == ${responseType} {
         return `[String: ${this.renderSwiftType(type.value)}]`;
       case "void":
         return "Void";
+      case "EmptyResponse":
+        return "EmptyResponse";
       case "Data":
         return "Data";
       case "TODO":

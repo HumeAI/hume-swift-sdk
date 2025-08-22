@@ -184,4 +184,4 @@ extension NetworkClientImpl {
 typealias NetworkClientResponse = Decodable & Hashable
 typealias NetworkClientRequest = Encodable & Hashable
 
-struct EmptyResponse: NetworkClientResponse {}
+public struct EmptyResponse: NetworkClientResponse {}

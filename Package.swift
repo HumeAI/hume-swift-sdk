@@ -33,7 +33,14 @@ let package = Package(
       ]),
     .testTarget(
       name: "HumeTests",
-      dependencies: ["Hume"]),
+      dependencies: ["Hume"],
+      path: "Tests/HumeTests"
+    ),
+    .testTarget(
+      name: "HumeServerTests",
+      dependencies: ["HumeServer", "Hume"],
+      path: "Tests/HumeServerTests"
+    ),
     .target(
       name: "HumeTestingUtils",
       dependencies: ["Hume"]
