@@ -1,3 +1,4 @@
+#if HUME_WIDGET
 //
 //  SoundPlayer.swift
 //
@@ -48,3 +49,4 @@ public actor SoundPlayer: Sendable {
     meteringCallback = callback
   }
 }
+#endif

@@ -1,3 +1,4 @@
+#if HUME_WIDGET
 //
 //  AudioSessionConfiguration.swift
 //  HumeAI2
@@ -42,3 +43,4 @@ enum AudioHubConfiguration {
     }
   }
 }
+#endif

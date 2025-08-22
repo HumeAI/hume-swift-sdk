@@ -1,3 +1,4 @@
+#if HUME_WIDGET
 //
 //  VoiceProviderDelegate.swift
 //  Hume
@@ -46,3 +47,4 @@ extension VoiceProviderDelegate {
   public func voiceProviderDidConnect(_ voiceProvider: any VoiceProvidable) {}
   public func voiceProvider(_ voiceProvider: any VoiceProvidable, didPlayClip clip: SoundClip) {}
 }
+#endif

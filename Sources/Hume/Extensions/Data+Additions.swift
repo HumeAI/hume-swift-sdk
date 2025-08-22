@@ -23,6 +23,7 @@ extension Data {
 }
 
 // MARK: - Audio Extensions
+#if HUME_WIDGET
 extension Data {
   func parseWAVHeader() -> WAVHeader? {
     guard count >= 44 else { return nil }
@@ -58,3 +59,4 @@ extension Data {
     return nil
   }
 }
+#endif

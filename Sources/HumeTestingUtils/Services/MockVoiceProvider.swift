@@ -1,3 +1,4 @@
+#if HUME_WIDGET
 //
 //  MockVoiceProvider.swift
 //  HumeAI2
@@ -98,3 +99,4 @@ extension UserMessage {
     return try! JSONDecoder().decode(UserMessage.self, from: data)
   }
 }
+#endif

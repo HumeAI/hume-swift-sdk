@@ -1,3 +1,4 @@
+#if HUME_WIDGET
 import AVFoundation
 
 public enum MicrophoneError: Error {
@@ -125,3 +126,4 @@ extension Microphone {
   }
 
 }
+#endif

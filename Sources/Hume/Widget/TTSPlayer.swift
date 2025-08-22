@@ -1,3 +1,4 @@
+#if HUME_WIDGET
 //
 //  TTSProvider.swift
 //  Hume
@@ -128,3 +129,4 @@ public class TTSPlayer {
     return _pcmPlayer!
   }
 }
+#endif

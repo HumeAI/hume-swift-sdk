@@ -1,3 +1,4 @@
+#if HUME_WIDGET
 //
 //  AudioBufferProcessor.swift
 //  HumeAI2
@@ -39,3 +40,4 @@ class AudioBufferProcessor {
     }
   }
 }
+#endif

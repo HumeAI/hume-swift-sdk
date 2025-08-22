@@ -1,3 +1,4 @@
+#if HUME_WIDGET
 //
 //  AVAdditions.swift
 //  HumeAI2
@@ -182,3 +183,4 @@ extension AVAudioEngine: Prettifiable {
       "\(type(of: node)) [Bus: \(point.bus), Channels: \(format.channelCount), SampleRate: \(format.sampleRate)]"
   }
 }
+#endif

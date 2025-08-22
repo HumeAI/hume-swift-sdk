@@ -1,3 +1,4 @@
+#if HUME_WIDGET
 //
 //  MockMicrophoneMode.swift
 //  Hume
@@ -16,3 +17,4 @@ extension MicrophoneMode {
     return MicrophoneMode(preferredMode: preferredMode, activeMode: activeMode)
   }
 }
+#endif

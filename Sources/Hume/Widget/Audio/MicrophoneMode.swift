@@ -1,3 +1,4 @@
+#if HUME_WIDGET
 //
 //  MicrophoneMode.swift
 //  HumeAI2
@@ -35,3 +36,4 @@ extension AVCaptureDevice.MicrophoneMode {
     }
   }
 }
+#endif

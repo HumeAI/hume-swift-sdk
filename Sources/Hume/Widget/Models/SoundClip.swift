@@ -1,3 +1,4 @@
+#if HUME_WIDGET
 //
 //  SoundClip.swift
 //  HumeAI2
@@ -69,3 +70,4 @@ extension SoundClip {
       header: data.parseWAVHeader())
   }
 }
+#endif

@@ -1,3 +1,4 @@
+#if HUME_WIDGET
 //
 //  AudioHub.swift
 //  Hume
@@ -324,3 +325,4 @@ extension AudioHub {
     }
   }
 }
+#endif

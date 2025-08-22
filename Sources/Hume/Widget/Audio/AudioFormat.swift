@@ -1,3 +1,4 @@
+#if HUME_WIDGET
 //
 //  AudioFormat.swift
 //  Hume
@@ -28,3 +29,4 @@ public enum AudioFormat {
     }
   }
 }
+#endif

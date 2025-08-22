@@ -1,3 +1,4 @@
+#if HUME_WIDGET
 import AVFAudio
 import Combine
 import Foundation
@@ -236,3 +237,4 @@ extension AudioSession {
     }
   }
 }
+#endif

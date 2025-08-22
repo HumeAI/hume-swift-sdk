@@ -1,3 +1,4 @@
+#if HUME_WIDGET
 //
 //  MeteredAudioSourceNode.swift
 //  HumeAI
@@ -89,3 +90,4 @@ class MeteredAudioSourceNode {
     return (currentPeak, currentDecibels)
   }
 }
+#endif

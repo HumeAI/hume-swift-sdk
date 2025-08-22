@@ -1,3 +1,4 @@
+#if HUME_WIDGET
 //
 //  VoiceProviderError.swift
 //  Hume
@@ -34,3 +35,4 @@ public enum VoiceProviderError: Error {
   /// An unknown error occurred.
   case unknown(Error)
 }
+#endif

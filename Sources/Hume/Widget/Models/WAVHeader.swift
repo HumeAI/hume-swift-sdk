@@ -1,3 +1,4 @@
+#if HUME_WIDGET
 //
 //  WAVHeader.swift
 //  Hume
@@ -36,3 +37,4 @@ extension WAVHeader {
       interleaved: self.numChannels > 1)
   }
 }
+#endif
