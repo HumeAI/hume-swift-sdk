@@ -1,3 +1,4 @@
+#if HUME_WIDGET
 //
 //  AudioHubState.swift
 //  Hume
@@ -15,3 +16,4 @@ public enum AudioHubState {
   case running
   case stopping
 }
+#endif

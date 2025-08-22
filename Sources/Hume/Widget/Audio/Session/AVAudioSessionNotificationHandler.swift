@@ -1,3 +1,4 @@
+#if HUME_WIDGET
 import AVFAudio
 import Foundation
 
@@ -104,3 +105,4 @@ final class AudioSessionNotificationHandler {
     unregister()
   }
 }
+#endif

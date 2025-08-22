@@ -1,3 +1,4 @@
+#if HUME_WIDGET
 //
 //  VoiceProvidable.swift
 //  Hume
@@ -26,3 +27,4 @@ public protocol VoiceProvidable {
   /// - Parameter mute: Pass `true` to mute, `false` to unmute.
   func mute(_ mute: Bool)
 }
+#endif

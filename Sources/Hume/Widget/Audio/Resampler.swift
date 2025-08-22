@@ -1,3 +1,4 @@
+#if HUME_WIDGET
 //
 //  Resampler.swift
 //  HumeAI2
@@ -242,3 +243,4 @@ extension Resampler {
     return int16Data
   }
 }
+#endif

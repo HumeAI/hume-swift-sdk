@@ -1,3 +1,4 @@
+#if HUME_WIDGET
 //
 //  AudioSessionIO.swift
 //  Hume
@@ -11,3 +12,4 @@ struct AudioSessionIO {
   var input: AVAudioSessionPortDescription
   var output: AVAudioSessionPortDescription
 }
+#endif

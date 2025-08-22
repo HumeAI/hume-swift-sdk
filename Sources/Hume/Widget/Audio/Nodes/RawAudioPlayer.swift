@@ -1,3 +1,4 @@
+#if HUME_WIDGET
 //
 //  File.swift
 //  Hume
@@ -222,3 +223,4 @@ final class RawAudioPlayer: Sendable {
     return combinedData
   }
 }
+#endif

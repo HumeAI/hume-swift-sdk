@@ -1,3 +1,4 @@
+#if HUME_WIDGET
 //
 //  AudioHubError.swift
 //  Hume
@@ -16,3 +17,4 @@ public enum AudioHubError: Error {
   case outputFormatError
   case microphoneUnavailable
 }
+#endif

@@ -1,3 +1,4 @@
+#if HUME_WIDGET
 //
 //  VoiceProviderState.swift
 //  Hume
@@ -13,3 +14,4 @@ public enum VoiceProviderState {
   case disconnecting
   case disconnected
 }
+#endif

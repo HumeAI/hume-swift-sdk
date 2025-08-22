@@ -1,3 +1,4 @@
+#if HUME_WIDGET
 import AVFoundation
 import Combine
 import Foundation
@@ -379,3 +380,4 @@ extension VoiceProvider {
     }
   }
 }
+#endif

@@ -1,3 +1,4 @@
+#if HUME_WIDGET
 //
 //  AudioSessionError.swift
 //  Hume
@@ -26,3 +27,4 @@ public enum AudioSessionError: Error {
     }
   }
 }
+#endif
