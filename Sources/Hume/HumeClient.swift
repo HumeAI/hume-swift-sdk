@@ -11,6 +11,8 @@ public class HumeClient {
   public enum Options {
     /// Use an access token with the Hume APIs
     case accessToken(token: String)
+    /// Use a closure to provide an access token asynchronously
+    case accessTokenProvider(() async throws -> String)
   }
 
   private let options: HumeClient.Options
@@ -21,7 +23,7 @@ public class HumeClient {
     let networkingService = NetworkingServiceImpl(
       session: URLNetworkingSession())
     self.networkClient = NetworkClientImpl.makeHumeClient(
-      tokenProvider: { options.asAuthToken },
+      tokenProvider: { try await options.accessTokenProvider() },
       networkingService: networkingService)
   }
 
@@ -35,10 +37,12 @@ public class HumeClient {
 }
 
 extension HumeClient.Options {
-  var asAuthToken: AuthTokenType {
+  func accessTokenProvider() async throws -> AuthTokenType {
     switch self {
     case .accessToken(let token):
       return .bearer(token)
+    case .accessTokenProvider(let tokenProvider):
+      return try await .bearer(tokenProvider())
     }
   }
 }
