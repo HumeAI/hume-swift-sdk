@@ -29,6 +29,8 @@ public enum VoiceProviderError: Error {
   case socketConnectionFailure(Error)
   /// Invalid session settings provided.
   case invalidSessionSettings
+  /// The chat connection received a `401` and may require a refreshed token.
+  case unauthorized
   /// An unknown error occurred.
   case unknown(Error)
 }

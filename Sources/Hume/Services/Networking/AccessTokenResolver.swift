@@ -12,6 +12,8 @@ internal struct AccessTokenResolver {
     switch options {
     case .accessToken(let accessToken):
       return accessToken
+    case .accessTokenProvider(let tokenProvider):
+      return try await tokenProvider()
     }
   }
 }

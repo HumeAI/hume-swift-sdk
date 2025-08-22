@@ -107,8 +107,22 @@ public class VoiceProvider: VoiceProvidable {
                 Task { await self?.disconnect() }
               }
             },
-            onError: { error, response in
-              Logger.warn("Socket Errored: \(error). Response: \(String(describing: response))")
+            onError: { [weak self] error, response in
+              Logger.error("Socket Errored: \(error). Response: \(String(describing: response))")
+              if let httpResponse = response as? HTTPURLResponse {
+                if httpResponse.statusCode == 401 {
+                  guard let self else {
+                    Logger.error("lost self")
+                    return
+                  }
+                  self.delegate?.voiceProvider(self, didProduceError: .unauthorized)
+                }
+              }
+
+              if self?.stateSubject.value == .connecting {
+                Logger.warn("aborting connection attempt due to error")
+                Task { await self?.disconnect() }
+              }
             }
           )
       }
