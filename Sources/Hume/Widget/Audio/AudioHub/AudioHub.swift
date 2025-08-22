@@ -165,7 +165,7 @@ extension AudioHub {
     microphoneDataChunkHandler = handler
     self.microphone?.onChunk = handleMicrophoneDataChunk
 
-    let inputFormat = inputNode.inputFormat(forBus: 0)
+    let inputFormat = microphone.inputFormat
     audioEngine.attach(microphone.sinkNode)
     audioEngine.connect(inputNode, to: microphone.sinkNode, format: inputFormat)
 
