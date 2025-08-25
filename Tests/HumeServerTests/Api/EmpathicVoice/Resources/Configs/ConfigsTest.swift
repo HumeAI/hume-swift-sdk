@@ -31,7 +31,7 @@ final class ConfigsTest: XCTestCase {
             versionDescription: "A test configuration for testing purposes",
             prompt: EviPostedConfigPromptSpec(
                 id: "test-prompt-id",
-                version: "1.0",
+                version: 1,
                 text: "You are a helpful AI assistant. Please respond to user queries in a friendly manner."
             ),
             voice: EviVoiceRef.voiceName(VoiceName(
@@ -39,8 +39,8 @@ final class ConfigsTest: XCTestCase {
                 provider: .humeAi
             )),
             languageModel: EviPostedLanguageModel(
-                modelProvider: "openai",
-                modelResource: "gpt-4",
+                modelProvider: .openAi,
+                modelResource: .gpt_4Turbo,
                 temperature: 0.7
             ),
             ellmModel: EviPostedEllmModel(
@@ -49,7 +49,7 @@ final class ConfigsTest: XCTestCase {
             tools: nil,
             builtinTools: [
                 EviPostedBuiltinTool(
-                    name: "web_search",
+                    name: .webSearch,
                     fallbackContent: "I couldn't search the web for that information."
                 )
             ],
@@ -146,7 +146,7 @@ final class ConfigsTest: XCTestCase {
             versionDescription: "Config with custom tools",
             prompt: EviPostedConfigPromptSpec(
                 id: "custom-tools-prompt",
-                version: "1.0",
+                version: 1,
                 text: "You have access to custom tools. Use them when appropriate."
             ),
             voice: EviVoiceRef.voiceId(VoiceId(
@@ -154,8 +154,8 @@ final class ConfigsTest: XCTestCase {
                 provider: .customVoice
             )),
             languageModel: EviPostedLanguageModel(
-                modelProvider: "anthropic",
-                modelResource: "claude-3-sonnet",
+                modelProvider: .anthropic,
+                modelResource: .claude_3Sonnet_20240229,
                 temperature: 0.5
             ),
             ellmModel: EviPostedEllmModel(
@@ -164,20 +164,20 @@ final class ConfigsTest: XCTestCase {
             tools: [
                 EviPostedUserDefinedToolSpec(
                     id: "custom-tool-1",
-                    version: "1.0"
+                    version: 1
                 ),
                 EviPostedUserDefinedToolSpec(
                     id: "custom-tool-2",
-                    version: "2.0"
+                    version: 2
                 )
             ],
             builtinTools: [
                 EviPostedBuiltinTool(
-                    name: "web_search",
+                    name: .webSearch,
                     fallbackContent: "Web search unavailable"
                 ),
                 EviPostedBuiltinTool(
-                    name: "hang_up",
+                    name: .hangUp,
                     fallbackContent: "Unable to end call"
                 )
             ],
@@ -187,7 +187,7 @@ final class ConfigsTest: XCTestCase {
             webhooks: [
                 EviPostedWebhookSpec(
                     url: "https://example.com/webhook",
-                    events: ["chat_started", "chat_ended"]
+                    events: [.chatStarted, .chatEnded]
                 )
             ]
         )
