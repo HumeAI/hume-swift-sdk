@@ -2,7 +2,7 @@
 
 import Foundation
 
-public class EMPATHICVOICEClient {
+public class EmpathicVoiceClient {
 
   private let networkClient: NetworkClient
 

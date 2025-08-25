@@ -231,8 +231,15 @@ export class SwiftRenderer {
     resourceNames: string[],
     basePath: string,
   ): File {
-    // Capitalize the namespace name for the class name
-    const className = namespaceName.toUpperCase() + "Client";
+    // Handle special cases for client class names
+    let className: string;
+    if (namespaceName === "tts") {
+      className = "TTSClient";
+    } else if (namespaceName === "empathicVoice") {
+      className = "EmpathicVoiceClient";
+    } else {
+      className = namespaceName.toUpperCase() + "Client";
+    }
 
     // Use uppercase directory names for TTS
     const directoryName = namespaceName === "tts" ? "TTS" : namespaceName;
