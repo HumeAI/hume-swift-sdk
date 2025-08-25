@@ -267,12 +267,21 @@ export class SwiftRenderer {
     
     public class ${className} {
         
-        private let networkClient: NetworkClient
+        private let options: HumeClient.Options
+        private lazy var networkClient: NetworkClient = {
+            let networkingService = NetworkingServiceImpl(session: URLNetworkingSession())
+            return NetworkClientImpl.makeHumeClient(
+                tokenProvider: { try await TokenResolver.resolveForHTTP(options: self.options) },
+                networkingService: networkingService
+            )
+        }()
         
-        init(networkClient: NetworkClient) {
-            self.networkClient = networkClient
+        init(options: HumeClient.Options) {
+            self.options = options
         }
-        ${resourceNames.map((resourceName) => `public lazy var ${camelCase(resourceName)}: ${resourceName} = { ${resourceName}(networkClient: networkClient) }()`).join("\n")}
+        
+        ${namespaceName === "empathicVoice" ? `public lazy var chat: Chat = { Chat(options: options) }()` : ""}
+        ${resourceNames.map((resourceName) => `public lazy var ${camelCase(resourceName)}: ${resourceName} = { ${resourceName}(options: options) }()`).join("\n")}
     }
 `,
     };
@@ -397,10 +406,17 @@ extension Endpoint where Response == ${responseType} {
     
     public class ${resourceName} {
         
-        private let networkClient: NetworkClient
+        private let options: HumeClient.Options
+        private lazy var networkClient: NetworkClient = {
+            let networkingService = NetworkingServiceImpl(session: URLNetworkingSession())
+            return NetworkClientImpl.makeHumeClient(
+                tokenProvider: { try await TokenResolver.resolveForHTTP(options: self.options) },
+                networkingService: networkingService
+            )
+        }()
         
-        init(networkClient: NetworkClient) {
-            self.networkClient = networkClient
+        init(options: HumeClient.Options) {
+            self.options = options
         }
         ${sdkMethods}
     }
