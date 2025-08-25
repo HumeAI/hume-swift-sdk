@@ -13,6 +13,10 @@ public class HumeClient {
     case accessToken(token: String)
     /// Use a closure to provide an access token asynchronously
     case accessTokenProvider(() async throws -> String)
+    #if HUME_SERVER
+    /// Use an API key with the Hume APIs (server-side only)
+    case apiKey(key: String)
+    #endif
   }
 
   private let options: HumeClient.Options
@@ -27,8 +31,8 @@ public class HumeClient {
       networkingService: networkingService)
   }
 
-  public lazy var empathicVoice: EmpathicVoice = {
-    return EmpathicVoice(options: options)
+  public lazy var empathicVoice: EmpathicVoiceClient = {
+    return EmpathicVoiceClient(networkClient: networkClient, options: options)
   }()
 
   public lazy var tts: TTSClient = {
@@ -43,6 +47,17 @@ extension HumeClient.Options {
       return .bearer(token)
     case .accessTokenProvider(let tokenProvider):
       return try await .bearer(tokenProvider())
+    #if HUME_SERVER
+    case .apiKey(let key):
+      return .apiKey(key)
+    #endif
     }
+  }
+  
+  var isApiKey: Bool {
+    #if HUME_SERVER
+    if case .apiKey = self { return true }
+    #endif
+    return false
   }
 }

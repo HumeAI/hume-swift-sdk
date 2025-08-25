@@ -14,6 +14,10 @@ internal struct AccessTokenResolver {
       return accessToken
     case .accessTokenProvider(let tokenProvider):
       return try await tokenProvider()
+    #if HUME_SERVER
+    case .apiKey(let key):
+      return key
+    #endif
     }
   }
 }

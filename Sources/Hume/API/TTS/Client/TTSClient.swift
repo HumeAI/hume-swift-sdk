@@ -9,5 +9,6 @@ public class TTSClient {
   init(networkClient: NetworkClient) {
     self.networkClient = networkClient
   }
+
   public lazy var tts: TTS = { TTS(networkClient: networkClient) }()
 }

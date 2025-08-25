@@ -26,10 +26,14 @@ public class Chat: NSObject {
     let host: String = SDKConfiguration.default.host
 
     var components = URLComponents(string: "wss://\(host)/v0/evi/chat")
+    
+    // Handle authentication - use accessToken or apiKey
     let accessToken = try await AccessTokenResolver.resolve(options: self.options)
-
+    
+    // For API keys, use apiKey query param; for tokens, use accessToken
+    let queryName = self.options.isApiKey ? "apiKey" : "accessToken"
     components?.queryItems = [
-      URLQueryItem(name: "accessToken", value: accessToken)
+      URLQueryItem(name: queryName, value: accessToken)
     ]
     if let configId = chatConnectOptions?.configId {
       components?.queryItems?.append(URLQueryItem(name: "config_id", value: configId))
