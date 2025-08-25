@@ -4,6 +4,7 @@ import * as OA from "./parse_openapi";
 import type { JsonSchema } from "./parse_openapi";
 import { camelCase } from "change-case";
 import { calculateSchemaDirections, type Direction } from "./directions";
+import { calculateSchemaAvailabilities, type Availability } from "./availability";
 import {
   calculateSchemaNamespaces,
   getNamespace,
@@ -69,6 +70,7 @@ const pascalCase = (str: string): string => {
 const applyEmotionScoresSpecialCase = (
   schema: JsonSchema,
   direction: Direction,
+  availability: Availability,
 ): { expr: SwiftType; defs: Record<string, SwiftDefinition> } | null => {
   if ((schema as any).schemaKey !== "evi:EmotionScores") {
     return null;
@@ -110,6 +112,7 @@ const applyEmotionScoresSpecialCase = (
       keyName: prop.keyName,
     })),
     direction: direction,
+    availability: availability,
   };
 
   // Change the schema kind to prevent regular object processing
@@ -220,6 +223,7 @@ const parseDiscriminatedUnionFromAnyOfRefs = (
     step: Step,
   ) => ReturnType<typeof schemaToSwiftType>,
   direction: Direction,
+  availability: Availability,
   currentNamespace: Namespace,
 ): ReturnType<typeof schemaToSwiftType> | null => {
   const variants = schema.anyOf.map((ref, i) => {
@@ -306,6 +310,7 @@ const parseDiscriminatedUnionFromAnyOfRefs = (
         ? discriminatorValuesArray
         : undefined,
     direction: direction,
+    availability: availability,
   };
   return {
     expr: {
@@ -328,6 +333,7 @@ const schemaToSwiftType = (
   lookupSchema: (name: string, namespace: Namespace) => JsonSchema | null,
   back: null | Back<JsonSchema, Step> = null,
   direction: Direction,
+  availability: Availability,
   currentNamespace: Namespace,
 ): { expr: SwiftType; defs: Record<string, SwiftDefinition> } => {
   const recurse = (
@@ -343,6 +349,7 @@ const schemaToSwiftType = (
         back,
       },
       direction,
+      availability,
       currentNamespace,
     );
   };
@@ -356,7 +363,7 @@ const schemaToSwiftType = (
   const todo = (message: string) => result({ type: "TODO", message });
 
   // Apply special case handling for EmotionScores
-  const emotionScoresResult = applyEmotionScoresSpecialCase(schema, direction);
+  const emotionScoresResult = applyEmotionScoresSpecialCase(schema, direction, availability);
   if (emotionScoresResult) {
     return result(emotionScoresResult.expr, emotionScoresResult.defs);
   }
@@ -376,6 +383,7 @@ const schemaToSwiftType = (
         lookupSchema,
         recurse,
         direction,
+        availability,
         currentNamespace,
       );
       if (discriminatedUnionResult) {
@@ -439,6 +447,7 @@ const schemaToSwiftType = (
             name: unionName,
             variants: cases.map((c) => c.type),
             direction: direction,
+            availability: availability,
           };
 
           return result(
@@ -569,6 +578,7 @@ const schemaToSwiftType = (
             ? discriminatorValuesArray
             : undefined,
         direction: direction,
+        availability: availability,
       };
 
       return result(
@@ -609,6 +619,7 @@ const schemaToSwiftType = (
         name: enumName,
         members,
         direction: direction,
+        availability: availability,
       };
       return result(
         { type: "Reference", name: enumName },
@@ -713,6 +724,7 @@ const schemaToSwiftType = (
         name,
         properties,
         direction: direction,
+        availability: availability,
       };
       defs[name] = struct;
       return result({ type: "Reference", name: struct.name }, defs);
@@ -772,6 +784,7 @@ const openapiOperationToSDKMethod = (
   op: OA.OpenAPIOperation,
   lookupSchema: (name: string, namespace: Namespace) => JsonSchema | null,
   namespace: Namespace,
+  availability: Availability,
 ): SDKMethod | null => {
   if (op.kind === "ignored") {
     return null;
@@ -803,6 +816,7 @@ const openapiOperationToSDKMethod = (
           lookupSchema,
           null,
           "sent",
+          "full", // Parameters are typically full availability 
           namespace,
         );
         let type = expr;
@@ -857,6 +871,7 @@ const openapiOperationToSDKMethod = (
         lookupSchema,
         null,
         "received",
+        "full", // Response schemas are typically full availability
         namespace,
       )
       : { expr: { type: "EmptyResponse" as const } };
@@ -869,6 +884,7 @@ const openapiOperationToSDKMethod = (
     verb,
     parameters: sdkParameters,
     returnType,
+    availability,
   };
 };
 
@@ -1043,15 +1059,19 @@ const buildSwiftSdk = (specs: OA.KnownSpecs): SwiftSDK => {
         `Expected all endpoints to have the same namespace`,
       );
       const methods = endpoints
-        .map(({ path, verb, operation }) =>
-          openapiOperationToSDKMethod(
+        .map(({ path, verb, operation }) => {
+          // Determine endpoint availability based on path
+          const endpointAvailability: Availability = path.includes("/configs") ? "serverOnly" : "full";
+          
+          return openapiOperationToSDKMethod(
             path,
             verb,
             operation as OA.OpenAPIOperation,
             lookupSchema,
             namespace,
-          ),
-        )
+            endpointAvailability,
+          );
+        })
         .filter(outNulls);
       return { namespace, resourceName, methods };
     },
@@ -1078,6 +1098,13 @@ const buildSwiftSdk = (specs: OA.KnownSpecs): SwiftSDK => {
   );
 
   const schemaToDirection = calculateSchemaDirections(
+    allEndpoints,
+    specs.eviAsync.channels,
+    specs.eviAsync.components.messages,
+    allSchemas,
+  );
+
+  const schemaToAvailability = calculateSchemaAvailabilities(
     allEndpoints,
     specs.eviAsync.channels,
     specs.eviAsync.components.messages,
@@ -1124,6 +1151,7 @@ const buildSwiftSdk = (specs: OA.KnownSpecs): SwiftSDK => {
 
     const namespace = schemaToNamespace.get(schemaKey);
     const direction = schemaToDirection.get(schemaKey);
+    const availability = schemaToAvailability.get(schemaKey);
 
     // Skip processing if no namespace was determined
     if (!namespace) {
@@ -1141,6 +1169,14 @@ const buildSwiftSdk = (specs: OA.KnownSpecs): SwiftSDK => {
       return;
     }
 
+    // Skip processing if no availability was determined (this should not happen with proper reference graph)
+    if (!availability) {
+      console.warn(
+        `Warning: No availability determined for schema ${schemaKey}, skipping`,
+      );
+      return;
+    }
+
     // Skip orphaned schemas (schemas that are not referenced by any endpoints)
     if (direction === "orphaned") {
       console.log(`Skipping orphaned schema: ${schemaKey}`);
@@ -1152,6 +1188,7 @@ const buildSwiftSdk = (specs: OA.KnownSpecs): SwiftSDK => {
       lookupSchema,
       null,
       direction,
+      availability,
       namespace,
     );
 
@@ -1164,6 +1201,7 @@ const buildSwiftSdk = (specs: OA.KnownSpecs): SwiftSDK => {
           name: name,
           reason: expr.message,
           direction: direction,
+          availability: availability,
         };
         addDefinition(namespace, commentedOutDef);
       }
