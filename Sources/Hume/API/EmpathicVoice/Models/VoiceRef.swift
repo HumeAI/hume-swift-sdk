@@ -2,7 +2,7 @@
 #if HUME_SERVER
   import Foundation
 
-  public enum EviVoiceRef: Codable, Hashable {
+  public enum VoiceRef: Codable, Hashable {
     case voiceId(VoiceId)
     case voiceName(VoiceName)
 
@@ -14,10 +14,10 @@
         self = .voiceName(voiceName)
       } else {
         throw DecodingError.typeMismatch(
-          EviVoiceRef.self,
+          VoiceRef.self,
           DecodingError.Context(
             codingPath: decoder.codingPath,
-            debugDescription: "Invalid value for EviVoiceRef"
+            debugDescription: "Invalid value for VoiceRef"
           )
         )
       }

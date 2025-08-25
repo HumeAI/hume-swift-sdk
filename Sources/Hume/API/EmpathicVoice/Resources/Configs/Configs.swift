@@ -18,7 +18,7 @@ public class Configs {
       name: String?,
       timeoutDuration: TimeInterval = 120,
       maxRetries: Int = 0
-    ) async throws -> EviReturnPagedConfigs {
+    ) async throws -> ReturnPagedConfigs {
       return try await networkClient.send(
         Endpoint.listConfigs(
           page_number: page_number, page_size: page_size,
@@ -29,7 +29,7 @@ public class Configs {
     }
 
     public func createConfig(
-      request: EviPostedConfig,
+      request: PostedConfig,
       timeoutDuration: TimeInterval = 120,
       maxRetries: Int = 0
     ) async throws -> ReturnConfig {
@@ -48,7 +48,7 @@ public class Configs {
       restrict_to_most_recent: Bool?,
       timeoutDuration: TimeInterval = 120,
       maxRetries: Int = 0
-    ) async throws -> EviReturnPagedConfigs {
+    ) async throws -> ReturnPagedConfigs {
       return try await networkClient.send(
         Endpoint.listConfigVersions(
           id: id, page_number: page_number, page_size: page_size,
@@ -60,7 +60,7 @@ public class Configs {
 
     public func createConfigVersion(
       id: String,
-      request: EviPostedConfigVersion,
+      request: PostedConfigVersion,
       timeoutDuration: TimeInterval = 120,
       maxRetries: Int = 0
     ) async throws -> ReturnConfig {
@@ -87,7 +87,7 @@ public class Configs {
 
     public func updateConfigName(
       id: String,
-      request: EviPostedConfigName,
+      request: PostedConfigName,
       timeoutDuration: TimeInterval = 120,
       maxRetries: Int = 0
     ) async throws -> EmptyResponse {
@@ -130,7 +130,7 @@ public class Configs {
     public func updateConfigDescription(
       id: String,
       version: String,
-      request: EviPostedConfigVersionDescription,
+      request: PostedConfigVersionDescription,
       timeoutDuration: TimeInterval = 120,
       maxRetries: Int = 0
     ) async throws -> ReturnConfig {
@@ -147,7 +147,7 @@ public class Configs {
 // MARK: - Endpoint Definitions
 #if HUME_SERVER
 
-  extension Endpoint where Response == EviReturnPagedConfigs {
+  extension Endpoint where Response == ReturnPagedConfigs {
     fileprivate static func listConfigs(
       page_number: Int?,
       page_size: Int?,
@@ -155,7 +155,7 @@ public class Configs {
       name: String?,
       timeoutDuration: TimeInterval,
       maxRetries: Int
-    ) -> Endpoint<EviReturnPagedConfigs> {
+    ) -> Endpoint<ReturnPagedConfigs> {
       Endpoint(
         path: "/v0/evi/configs",
         method: .get,
@@ -169,7 +169,7 @@ public class Configs {
 
   extension Endpoint where Response == ReturnConfig {
     fileprivate static func createConfig(
-      request: EviPostedConfig,
+      request: PostedConfig,
       timeoutDuration: TimeInterval,
       maxRetries: Int
     ) -> Endpoint<ReturnConfig> {
@@ -184,7 +184,7 @@ public class Configs {
     }
   }
 
-  extension Endpoint where Response == EviReturnPagedConfigs {
+  extension Endpoint where Response == ReturnPagedConfigs {
     fileprivate static func listConfigVersions(
       id: String,
       page_number: Int?,
@@ -192,7 +192,7 @@ public class Configs {
       restrict_to_most_recent: Bool?,
       timeoutDuration: TimeInterval,
       maxRetries: Int
-    ) -> Endpoint<EviReturnPagedConfigs> {
+    ) -> Endpoint<ReturnPagedConfigs> {
       Endpoint(
         path: "/v0/evi/configs/{id}",
         method: .get,
@@ -207,7 +207,7 @@ public class Configs {
   extension Endpoint where Response == ReturnConfig {
     fileprivate static func createConfigVersion(
       id: String,
-      request: EviPostedConfigVersion,
+      request: PostedConfigVersion,
       timeoutDuration: TimeInterval,
       maxRetries: Int
     ) -> Endpoint<ReturnConfig> {
@@ -242,7 +242,7 @@ public class Configs {
   extension Endpoint where Response == EmptyResponse {
     fileprivate static func updateConfigName(
       id: String,
-      request: EviPostedConfigName,
+      request: PostedConfigName,
       timeoutDuration: TimeInterval,
       maxRetries: Int
     ) -> Endpoint<EmptyResponse> {
@@ -297,7 +297,7 @@ public class Configs {
     fileprivate static func updateConfigDescription(
       id: String,
       version: String,
-      request: EviPostedConfigVersionDescription,
+      request: PostedConfigVersionDescription,
       timeoutDuration: TimeInterval,
       maxRetries: Int
     ) -> Endpoint<ReturnConfig> {
