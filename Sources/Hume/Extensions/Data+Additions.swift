@@ -24,39 +24,39 @@ extension Data {
 
 // MARK: - Audio Extensions
 #if HUME_WIDGET
-extension Data {
-  func parseWAVHeader() -> WAVHeader? {
-    guard count >= 44 else { return nil }
+  extension Data {
+    func parseWAVHeader() -> WAVHeader? {
+      guard count >= 44 else { return nil }
 
-    func readString(_ offset: Int, _ length: Int) -> String {
-      let subdata = subdata(in: offset..<offset + length)
-      return String(decoding: subdata, as: UTF8.self)
-    }
+      func readString(_ offset: Int, _ length: Int) -> String {
+        let subdata = subdata(in: offset..<offset + length)
+        return String(decoding: subdata, as: UTF8.self)
+      }
 
-    func readUInt16(_ offset: Int) -> UInt16 {
-      return subdata(in: offset..<offset + 2).withUnsafeBytes { $0.load(as: UInt16.self) }
-    }
+      func readUInt16(_ offset: Int) -> UInt16 {
+        return subdata(in: offset..<offset + 2).withUnsafeBytes { $0.load(as: UInt16.self) }
+      }
 
-    func readUInt32(_ offset: Int) -> UInt32 {
-      return subdata(in: offset..<offset + 4).withUnsafeBytes { $0.load(as: UInt32.self) }
-    }
+      func readUInt32(_ offset: Int) -> UInt32 {
+        return subdata(in: offset..<offset + 4).withUnsafeBytes { $0.load(as: UInt32.self) }
+      }
 
-    let header = WAVHeader(
-      chunkID: readString(0, 4),
-      format: readString(8, 4),
-      subchunk1ID: readString(12, 4),
-      audioFormat: readUInt16(20),
-      numChannels: readUInt16(22),
-      sampleRate: readUInt32(24),
-      byteRate: readUInt32(28),
-      blockAlign: readUInt16(32),
-      bitsPerSample: readUInt16(34)
-    )
-    if header.isValid {
-      Logger.debug("Header: \(header)")
-      return header
+      let header = WAVHeader(
+        chunkID: readString(0, 4),
+        format: readString(8, 4),
+        subchunk1ID: readString(12, 4),
+        audioFormat: readUInt16(20),
+        numChannels: readUInt16(22),
+        sampleRate: readUInt32(24),
+        byteRate: readUInt32(28),
+        blockAlign: readUInt16(32),
+        bitsPerSample: readUInt16(34)
+      )
+      if header.isValid {
+        Logger.debug("Header: \(header)")
+        return header
+      }
+      return nil
     }
-    return nil
   }
-}
 #endif

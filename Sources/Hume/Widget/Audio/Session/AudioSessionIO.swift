@@ -1,15 +1,15 @@
 #if HUME_WIDGET
-//
-//  AudioSessionIO.swift
-//  Hume
-//
-//  Created by Chris on 6/30/25.
-//
+  //
+  //  AudioSessionIO.swift
+  //  Hume
+  //
+  //  Created by Chris on 6/30/25.
+  //
 
-import AVFoundation
+  import AVFoundation
 
-struct AudioSessionIO {
-  var input: AVAudioSessionPortDescription
-  var output: AVAudioSessionPortDescription
-}
+  struct AudioSessionIO {
+    var input: AVAudioSessionPortDescription
+    var output: AVAudioSessionPortDescription
+  }
 #endif
