@@ -56,17 +56,23 @@ export const swiftName = (schema: JsonSchema, surroundingName?: string): string 
     throw new Error(`Cannot determine name from schema: ${JSON.stringify(schema)} beneath ${surroundingName}`);
   }
 
+  // Helper function to strip namespace prefix from schemaKey
+  const stripNamespacePrefix = (schemaKey: string): string => {
+    // Remove namespace prefixes like "evi:" or "tts:" from schemaKey
+    return schemaKey.replace(/^(evi|tts):/, "");
+  };
+
   if (schema.kind === "enum") {
     return schema["x-fern-type-name"] ??
       schema.title ??
-      schema.schemaKey ??
+      (schema.schemaKey ? stripNamespacePrefix(schema.schemaKey) : undefined) ??
       surroundingName ?? fail();
   }
   if (schema.kind === "object") {
     return normalizeObjectName(
       schema["x-fern-type-name"] ??
       schema.title ??
-      schema.schemaKey ?? surroundingName ?? fail());
+      (schema.schemaKey ? stripNamespacePrefix(schema.schemaKey) : undefined) ?? surroundingName ?? fail());
   }
   if (schema.kind === "discriminatedUnion") {
     return schema.title ? schema.title : fail();
@@ -91,14 +97,14 @@ export const swiftName = (schema: JsonSchema, surroundingName?: string): string 
       schema.schemaKey &&
       typeof schema.schemaKey === "string"
     ) {
-      result = schema.schemaKey;
+      result = stripNamespacePrefix(schema.schemaKey);
     }
     return normalizeObjectName(result);
   }
 
   if (schema.kind === "anyOfRefs") {
     return normalizeObjectName(
-      schema.schemaKey ?? surroundingName ?? fail(),
+      (schema.schemaKey ? stripNamespacePrefix(schema.schemaKey) : undefined) ?? surroundingName ?? fail(),
     );
   }
 
@@ -134,6 +140,10 @@ const typeRenames: Record<string, Record<string, string>> = {
   },
   Voice: {
     tts: "Voice",
+  },
+  VoiceRef: {
+    tts: "TTSVoiceRef",
+    empathicVoice: "VoiceRef",
   },
 };
 

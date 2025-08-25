@@ -83,7 +83,7 @@
     "name",
     "provider"
   ],
-  "EviReturnUserDefinedTool.init": [
+  "ReturnUserDefinedTool.init": [
     "toolType",
     "id",
     "version",
@@ -106,13 +106,13 @@
     "modifiedOn",
     "text"
   ],
-  "EviReturnPagedConfigs.init": [
+  "ReturnPagedConfigs.init": [
     "pageNumber",
     "pageSize",
     "totalPages",
     "configsPage"
   ],
-  "EviPostedConfig.init": [
+  "PostedConfig.init": [
     "eviVersion",
     "name",
     "versionDescription",
@@ -146,7 +146,7 @@
     "nudges",
     "webhooks"
   ],
-  "EviPostedConfigVersion.init": [
+  "PostedConfigVersion.init": [
     "eviVersion",
     "versionDescription",
     "prompt",
@@ -160,68 +160,39 @@
     "nudges",
     "webhooks"
   ],
-  "EviPostedConfigName.init": [
+  "PostedConfigName.init": [
     "name"
   ],
-  "EviPostedConfigVersionDescription.init": [
+  "PostedConfigVersionDescription.init": [
     "versionDescription"
   ],
-  "EviReturnPrompt.init": [
-    "name",
-    "id",
-    "text",
-    "version",
-    "versionDescription",
-    "versionType",
-    "createdOn",
-    "modifiedOn"
-  ],
-  "EviReturnConfig.init": [
-    "name",
-    "id",
-    "version",
-    "tools",
-    "versionDescription",
-    "languageModel",
-    "builtinTools",
-    "eviVersion",
-    "timeouts",
-    "nudges",
-    "eventMessages",
-    "ellmModel",
-    "voice",
-    "prompt",
-    "webhooks",
-    "createdOn",
-    "modifiedOn"
-  ],
-  "EviPostedConfigPromptSpec.init": [
+  "PostedConfigPromptSpec.init": [
     "id",
     "version",
     "text"
   ],
-  "EviPostedLanguageModel.init": [
+  "PostedLanguageModel.init": [
     "modelProvider",
     "modelResource",
     "temperature"
   ],
-  "EviPostedEllmModel.init": [
+  "PostedEllmModel.init": [
     "allowShortResponses"
   ],
-  "EviPostedUserDefinedToolSpec.init": [
+  "PostedUserDefinedToolSpec.init": [
     "id",
     "version"
   ],
-  "EviPostedBuiltinTool.init": [
+  "PostedBuiltinTool.init": [
     "name",
     "fallbackContent"
   ],
-  "EviPostedEventMessageSpecs.init": [
+  "PostedEventMessageSpecs.init": [
     "onNewChat",
     "onInactivityTimeout",
     "onMaxDurationTimeout"
   ],
-  "EviPostedNudgeSpec.init": [
+  "PostedNudgeSpec.init": [
     "enabled",
     "intervalSecs"
   ],
@@ -233,37 +204,37 @@
     "durationSecs",
     "enabled"
   ],
-  "EviPostedTimeoutSpecs.init": [
+  "PostedTimeoutSpecs.init": [
     "inactivity",
     "maxDuration"
   ],
-  "EviPostedWebhookSpec.init": [
+  "PostedWebhookSpec.init": [
     "url",
     "events"
   ],
-  "EviReturnLanguageModel.init": [
+  "ReturnLanguageModel.init": [
     "modelProvider",
     "modelResource",
     "temperature"
   ],
-  "EviReturnEllmModel.init": [
+  "ReturnEllmModel.init": [
     "allowShortResponses"
   ],
-  "EviReturnBuiltinTool.init": [
+  "ReturnBuiltinTool.init": [
     "toolType",
     "name",
     "fallbackContent"
   ],
-  "EviReturnEventMessageSpecs.init": [
+  "ReturnEventMessageSpecs.init": [
     "onNewChat",
     "onInactivityTimeout",
     "onMaxDurationTimeout"
   ],
-  "EviReturnTimeoutSpecs.init": [
+  "ReturnTimeoutSpecs.init": [
     "inactivity",
     "maxDuration"
   ],
-  "EviReturnNudgeSpec.init": [
+  "ReturnNudgeSpec.init": [
     "enabled",
     "intervalSecs"
   ],
@@ -271,19 +242,19 @@
     "url",
     "events"
   ],
-  "EviPostedEventMessageSpec.init": [
+  "PostedEventMessageSpec.init": [
     "enabled",
     "text"
   ],
-  "EviReturnEventMessageSpec.init": [
+  "ReturnEventMessageSpec.init": [
     "enabled",
     "text"
   ],
-  "EviReturnTimeoutSpec.init": [
+  "ReturnTimeoutSpec.init": [
     "enabled",
     "durationSecs"
   ],
-  "EviReturnVoice.init": [
+  "ReturnVoice.init": [
     "id",
     "name",
     "provider"
