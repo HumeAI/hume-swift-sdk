@@ -54,7 +54,7 @@ export const swiftName = (schema: JsonSchema, surroundingName?: string): string 
   }
   const fail = () => {
     throw new Error(`Cannot determine name from schema: ${JSON.stringify(schema)} beneath ${surroundingName}`);
-  }
+  };
 
   // Helper function to strip namespace prefix from schemaKey
   const stripNamespacePrefix = (schemaKey: string): string => {
