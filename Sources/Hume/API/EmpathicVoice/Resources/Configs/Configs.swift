@@ -9,301 +9,306 @@ public class Configs {
   init(networkClient: NetworkClient) {
     self.networkClient = networkClient
   }
+  #if HUME_SERVER
 
-  public func listConfigs(
-    page_number: Int?,
-    page_size: Int?,
-    restrict_to_most_recent: Bool?,
-    name: String?,
-    timeoutDuration: TimeInterval = 120,
-    maxRetries: Int = 0
-  ) async throws -> EviReturnPagedConfigs {
-    return try await networkClient.send(
-      Endpoint.listConfigs(
-        page_number: page_number, page_size: page_size,
-        restrict_to_most_recent: restrict_to_most_recent, name: name,
-        timeoutDuration: timeoutDuration,
-        maxRetries: maxRetries)
-    )
-  }
+    public func listConfigs(
+      page_number: Int?,
+      page_size: Int?,
+      restrict_to_most_recent: Bool?,
+      name: String?,
+      timeoutDuration: TimeInterval = 120,
+      maxRetries: Int = 0
+    ) async throws -> EviReturnPagedConfigs {
+      return try await networkClient.send(
+        Endpoint.listConfigs(
+          page_number: page_number, page_size: page_size,
+          restrict_to_most_recent: restrict_to_most_recent, name: name,
+          timeoutDuration: timeoutDuration,
+          maxRetries: maxRetries)
+      )
+    }
 
-  public func createConfig(
-    request: EviPostedConfig,
-    timeoutDuration: TimeInterval = 120,
-    maxRetries: Int = 0
-  ) async throws -> ReturnConfig {
-    return try await networkClient.send(
-      Endpoint.createConfig(
-        request: request,
-        timeoutDuration: timeoutDuration,
-        maxRetries: maxRetries)
-    )
-  }
+    public func createConfig(
+      request: EviPostedConfig,
+      timeoutDuration: TimeInterval = 120,
+      maxRetries: Int = 0
+    ) async throws -> ReturnConfig {
+      return try await networkClient.send(
+        Endpoint.createConfig(
+          request: request,
+          timeoutDuration: timeoutDuration,
+          maxRetries: maxRetries)
+      )
+    }
 
-  public func listConfigVersions(
-    id: String,
-    page_number: Int?,
-    page_size: Int?,
-    restrict_to_most_recent: Bool?,
-    timeoutDuration: TimeInterval = 120,
-    maxRetries: Int = 0
-  ) async throws -> EviReturnPagedConfigs {
-    return try await networkClient.send(
-      Endpoint.listConfigVersions(
-        id: id, page_number: page_number, page_size: page_size,
-        restrict_to_most_recent: restrict_to_most_recent,
-        timeoutDuration: timeoutDuration,
-        maxRetries: maxRetries)
-    )
-  }
+    public func listConfigVersions(
+      id: String,
+      page_number: Int?,
+      page_size: Int?,
+      restrict_to_most_recent: Bool?,
+      timeoutDuration: TimeInterval = 120,
+      maxRetries: Int = 0
+    ) async throws -> EviReturnPagedConfigs {
+      return try await networkClient.send(
+        Endpoint.listConfigVersions(
+          id: id, page_number: page_number, page_size: page_size,
+          restrict_to_most_recent: restrict_to_most_recent,
+          timeoutDuration: timeoutDuration,
+          maxRetries: maxRetries)
+      )
+    }
 
-  public func createConfigVersion(
-    id: String,
-    request: EviPostedConfigVersion,
-    timeoutDuration: TimeInterval = 120,
-    maxRetries: Int = 0
-  ) async throws -> ReturnConfig {
-    return try await networkClient.send(
-      Endpoint.createConfigVersion(
-        id: id, request: request,
-        timeoutDuration: timeoutDuration,
-        maxRetries: maxRetries)
-    )
-  }
+    public func createConfigVersion(
+      id: String,
+      request: EviPostedConfigVersion,
+      timeoutDuration: TimeInterval = 120,
+      maxRetries: Int = 0
+    ) async throws -> ReturnConfig {
+      return try await networkClient.send(
+        Endpoint.createConfigVersion(
+          id: id, request: request,
+          timeoutDuration: timeoutDuration,
+          maxRetries: maxRetries)
+      )
+    }
 
-  public func deleteConfig(
-    id: String,
-    timeoutDuration: TimeInterval = 120,
-    maxRetries: Int = 0
-  ) async throws -> EmptyResponse {
-    return try await networkClient.send(
-      Endpoint.deleteConfig(
-        id: id,
-        timeoutDuration: timeoutDuration,
-        maxRetries: maxRetries)
-    )
-  }
+    public func deleteConfig(
+      id: String,
+      timeoutDuration: TimeInterval = 120,
+      maxRetries: Int = 0
+    ) async throws -> EmptyResponse {
+      return try await networkClient.send(
+        Endpoint.deleteConfig(
+          id: id,
+          timeoutDuration: timeoutDuration,
+          maxRetries: maxRetries)
+      )
+    }
 
-  public func updateConfigName(
-    id: String,
-    request: EviPostedConfigName,
-    timeoutDuration: TimeInterval = 120,
-    maxRetries: Int = 0
-  ) async throws -> EmptyResponse {
-    return try await networkClient.send(
-      Endpoint.updateConfigName(
-        id: id, request: request,
-        timeoutDuration: timeoutDuration,
-        maxRetries: maxRetries)
-    )
-  }
+    public func updateConfigName(
+      id: String,
+      request: EviPostedConfigName,
+      timeoutDuration: TimeInterval = 120,
+      maxRetries: Int = 0
+    ) async throws -> EmptyResponse {
+      return try await networkClient.send(
+        Endpoint.updateConfigName(
+          id: id, request: request,
+          timeoutDuration: timeoutDuration,
+          maxRetries: maxRetries)
+      )
+    }
 
-  public func getConfigVersion(
-    id: String,
-    version: String,
-    timeoutDuration: TimeInterval = 120,
-    maxRetries: Int = 0
-  ) async throws -> ReturnConfig {
-    return try await networkClient.send(
-      Endpoint.getConfigVersion(
-        id: id, version: version,
-        timeoutDuration: timeoutDuration,
-        maxRetries: maxRetries)
-    )
-  }
+    public func getConfigVersion(
+      id: String,
+      version: String,
+      timeoutDuration: TimeInterval = 120,
+      maxRetries: Int = 0
+    ) async throws -> ReturnConfig {
+      return try await networkClient.send(
+        Endpoint.getConfigVersion(
+          id: id, version: version,
+          timeoutDuration: timeoutDuration,
+          maxRetries: maxRetries)
+      )
+    }
 
-  public func deleteConfigVersion(
-    id: String,
-    version: String,
-    timeoutDuration: TimeInterval = 120,
-    maxRetries: Int = 0
-  ) async throws -> EmptyResponse {
-    return try await networkClient.send(
-      Endpoint.deleteConfigVersion(
-        id: id, version: version,
-        timeoutDuration: timeoutDuration,
-        maxRetries: maxRetries)
-    )
-  }
+    public func deleteConfigVersion(
+      id: String,
+      version: String,
+      timeoutDuration: TimeInterval = 120,
+      maxRetries: Int = 0
+    ) async throws -> EmptyResponse {
+      return try await networkClient.send(
+        Endpoint.deleteConfigVersion(
+          id: id, version: version,
+          timeoutDuration: timeoutDuration,
+          maxRetries: maxRetries)
+      )
+    }
 
-  public func updateConfigDescription(
-    id: String,
-    version: String,
-    request: EviPostedConfigVersionDescription,
-    timeoutDuration: TimeInterval = 120,
-    maxRetries: Int = 0
-  ) async throws -> ReturnConfig {
-    return try await networkClient.send(
-      Endpoint.updateConfigDescription(
-        id: id, version: version, request: request,
-        timeoutDuration: timeoutDuration,
-        maxRetries: maxRetries)
-    )
-  }
+    public func updateConfigDescription(
+      id: String,
+      version: String,
+      request: EviPostedConfigVersionDescription,
+      timeoutDuration: TimeInterval = 120,
+      maxRetries: Int = 0
+    ) async throws -> ReturnConfig {
+      return try await networkClient.send(
+        Endpoint.updateConfigDescription(
+          id: id, version: version, request: request,
+          timeoutDuration: timeoutDuration,
+          maxRetries: maxRetries)
+      )
+    }
+  #endif
 }
 
 // MARK: - Endpoint Definitions
-extension Endpoint where Response == EviReturnPagedConfigs {
-  fileprivate static func listConfigs(
-    page_number: Int?,
-    page_size: Int?,
-    restrict_to_most_recent: Bool?,
-    name: String?,
-    timeoutDuration: TimeInterval,
-    maxRetries: Int
-  ) -> Endpoint<EviReturnPagedConfigs> {
-    Endpoint(
-      path: "/v0/evi/configs",
-      method: .get,
-      headers: ["Content-Type": "application/json"],
-      body: nil,
-      cachePolicy: .reloadIgnoringLocalAndRemoteCacheData,
-      timeoutDuration: timeoutDuration,
-      maxRetries: maxRetries)
-  }
-}
+#if HUME_SERVER
 
-extension Endpoint where Response == ReturnConfig {
-  fileprivate static func createConfig(
-    request: EviPostedConfig,
-    timeoutDuration: TimeInterval,
-    maxRetries: Int
-  ) -> Endpoint<ReturnConfig> {
-    Endpoint(
-      path: "/v0/evi/configs",
-      method: .post,
-      headers: ["Content-Type": "application/json"],
-      body: request,
-      cachePolicy: .reloadIgnoringLocalAndRemoteCacheData,
-      timeoutDuration: timeoutDuration,
-      maxRetries: maxRetries)
+  extension Endpoint where Response == EviReturnPagedConfigs {
+    fileprivate static func listConfigs(
+      page_number: Int?,
+      page_size: Int?,
+      restrict_to_most_recent: Bool?,
+      name: String?,
+      timeoutDuration: TimeInterval,
+      maxRetries: Int
+    ) -> Endpoint<EviReturnPagedConfigs> {
+      Endpoint(
+        path: "/v0/evi/configs",
+        method: .get,
+        headers: ["Content-Type": "application/json"],
+        body: nil,
+        cachePolicy: .reloadIgnoringLocalAndRemoteCacheData,
+        timeoutDuration: timeoutDuration,
+        maxRetries: maxRetries)
+    }
   }
-}
 
-extension Endpoint where Response == EviReturnPagedConfigs {
-  fileprivate static func listConfigVersions(
-    id: String,
-    page_number: Int?,
-    page_size: Int?,
-    restrict_to_most_recent: Bool?,
-    timeoutDuration: TimeInterval,
-    maxRetries: Int
-  ) -> Endpoint<EviReturnPagedConfigs> {
-    Endpoint(
-      path: "/v0/evi/configs/{id}",
-      method: .get,
-      headers: ["Content-Type": "application/json"],
-      body: nil,
-      cachePolicy: .reloadIgnoringLocalAndRemoteCacheData,
-      timeoutDuration: timeoutDuration,
-      maxRetries: maxRetries)
+  extension Endpoint where Response == ReturnConfig {
+    fileprivate static func createConfig(
+      request: EviPostedConfig,
+      timeoutDuration: TimeInterval,
+      maxRetries: Int
+    ) -> Endpoint<ReturnConfig> {
+      Endpoint(
+        path: "/v0/evi/configs",
+        method: .post,
+        headers: ["Content-Type": "application/json"],
+        body: request,
+        cachePolicy: .reloadIgnoringLocalAndRemoteCacheData,
+        timeoutDuration: timeoutDuration,
+        maxRetries: maxRetries)
+    }
   }
-}
 
-extension Endpoint where Response == ReturnConfig {
-  fileprivate static func createConfigVersion(
-    id: String,
-    request: EviPostedConfigVersion,
-    timeoutDuration: TimeInterval,
-    maxRetries: Int
-  ) -> Endpoint<ReturnConfig> {
-    Endpoint(
-      path: "/v0/evi/configs/{id}",
-      method: .post,
-      headers: ["Content-Type": "application/json"],
-      body: request,
-      cachePolicy: .reloadIgnoringLocalAndRemoteCacheData,
-      timeoutDuration: timeoutDuration,
-      maxRetries: maxRetries)
+  extension Endpoint where Response == EviReturnPagedConfigs {
+    fileprivate static func listConfigVersions(
+      id: String,
+      page_number: Int?,
+      page_size: Int?,
+      restrict_to_most_recent: Bool?,
+      timeoutDuration: TimeInterval,
+      maxRetries: Int
+    ) -> Endpoint<EviReturnPagedConfigs> {
+      Endpoint(
+        path: "/v0/evi/configs/{id}",
+        method: .get,
+        headers: ["Content-Type": "application/json"],
+        body: nil,
+        cachePolicy: .reloadIgnoringLocalAndRemoteCacheData,
+        timeoutDuration: timeoutDuration,
+        maxRetries: maxRetries)
+    }
   }
-}
 
-extension Endpoint where Response == EmptyResponse {
-  fileprivate static func deleteConfig(
-    id: String,
-    timeoutDuration: TimeInterval,
-    maxRetries: Int
-  ) -> Endpoint<EmptyResponse> {
-    Endpoint(
-      path: "/v0/evi/configs/{id}",
-      method: .delete,
-      headers: ["Content-Type": "application/json"],
-      body: nil,
-      cachePolicy: .reloadIgnoringLocalAndRemoteCacheData,
-      timeoutDuration: timeoutDuration,
-      maxRetries: maxRetries)
+  extension Endpoint where Response == ReturnConfig {
+    fileprivate static func createConfigVersion(
+      id: String,
+      request: EviPostedConfigVersion,
+      timeoutDuration: TimeInterval,
+      maxRetries: Int
+    ) -> Endpoint<ReturnConfig> {
+      Endpoint(
+        path: "/v0/evi/configs/{id}",
+        method: .post,
+        headers: ["Content-Type": "application/json"],
+        body: request,
+        cachePolicy: .reloadIgnoringLocalAndRemoteCacheData,
+        timeoutDuration: timeoutDuration,
+        maxRetries: maxRetries)
+    }
   }
-}
 
-extension Endpoint where Response == EmptyResponse {
-  fileprivate static func updateConfigName(
-    id: String,
-    request: EviPostedConfigName,
-    timeoutDuration: TimeInterval,
-    maxRetries: Int
-  ) -> Endpoint<EmptyResponse> {
-    Endpoint(
-      path: "/v0/evi/configs/{id}",
-      method: .patch,
-      headers: ["Content-Type": "application/json"],
-      body: request,
-      cachePolicy: .reloadIgnoringLocalAndRemoteCacheData,
-      timeoutDuration: timeoutDuration,
-      maxRetries: maxRetries)
+  extension Endpoint where Response == EmptyResponse {
+    fileprivate static func deleteConfig(
+      id: String,
+      timeoutDuration: TimeInterval,
+      maxRetries: Int
+    ) -> Endpoint<EmptyResponse> {
+      Endpoint(
+        path: "/v0/evi/configs/{id}",
+        method: .delete,
+        headers: ["Content-Type": "application/json"],
+        body: nil,
+        cachePolicy: .reloadIgnoringLocalAndRemoteCacheData,
+        timeoutDuration: timeoutDuration,
+        maxRetries: maxRetries)
+    }
   }
-}
 
-extension Endpoint where Response == ReturnConfig {
-  fileprivate static func getConfigVersion(
-    id: String,
-    version: String,
-    timeoutDuration: TimeInterval,
-    maxRetries: Int
-  ) -> Endpoint<ReturnConfig> {
-    Endpoint(
-      path: "/v0/evi/configs/{id}/version/{version}",
-      method: .get,
-      headers: ["Content-Type": "application/json"],
-      body: nil,
-      cachePolicy: .reloadIgnoringLocalAndRemoteCacheData,
-      timeoutDuration: timeoutDuration,
-      maxRetries: maxRetries)
+  extension Endpoint where Response == EmptyResponse {
+    fileprivate static func updateConfigName(
+      id: String,
+      request: EviPostedConfigName,
+      timeoutDuration: TimeInterval,
+      maxRetries: Int
+    ) -> Endpoint<EmptyResponse> {
+      Endpoint(
+        path: "/v0/evi/configs/{id}",
+        method: .patch,
+        headers: ["Content-Type": "application/json"],
+        body: request,
+        cachePolicy: .reloadIgnoringLocalAndRemoteCacheData,
+        timeoutDuration: timeoutDuration,
+        maxRetries: maxRetries)
+    }
   }
-}
 
-extension Endpoint where Response == EmptyResponse {
-  fileprivate static func deleteConfigVersion(
-    id: String,
-    version: String,
-    timeoutDuration: TimeInterval,
-    maxRetries: Int
-  ) -> Endpoint<EmptyResponse> {
-    Endpoint(
-      path: "/v0/evi/configs/{id}/version/{version}",
-      method: .delete,
-      headers: ["Content-Type": "application/json"],
-      body: nil,
-      cachePolicy: .reloadIgnoringLocalAndRemoteCacheData,
-      timeoutDuration: timeoutDuration,
-      maxRetries: maxRetries)
+  extension Endpoint where Response == ReturnConfig {
+    fileprivate static func getConfigVersion(
+      id: String,
+      version: String,
+      timeoutDuration: TimeInterval,
+      maxRetries: Int
+    ) -> Endpoint<ReturnConfig> {
+      Endpoint(
+        path: "/v0/evi/configs/{id}/version/{version}",
+        method: .get,
+        headers: ["Content-Type": "application/json"],
+        body: nil,
+        cachePolicy: .reloadIgnoringLocalAndRemoteCacheData,
+        timeoutDuration: timeoutDuration,
+        maxRetries: maxRetries)
+    }
   }
-}
 
-extension Endpoint where Response == ReturnConfig {
-  fileprivate static func updateConfigDescription(
-    id: String,
-    version: String,
-    request: EviPostedConfigVersionDescription,
-    timeoutDuration: TimeInterval,
-    maxRetries: Int
-  ) -> Endpoint<ReturnConfig> {
-    Endpoint(
-      path: "/v0/evi/configs/{id}/version/{version}",
-      method: .patch,
-      headers: ["Content-Type": "application/json"],
-      body: request,
-      cachePolicy: .reloadIgnoringLocalAndRemoteCacheData,
-      timeoutDuration: timeoutDuration,
-      maxRetries: maxRetries)
+  extension Endpoint where Response == EmptyResponse {
+    fileprivate static func deleteConfigVersion(
+      id: String,
+      version: String,
+      timeoutDuration: TimeInterval,
+      maxRetries: Int
+    ) -> Endpoint<EmptyResponse> {
+      Endpoint(
+        path: "/v0/evi/configs/{id}/version/{version}",
+        method: .delete,
+        headers: ["Content-Type": "application/json"],
+        body: nil,
+        cachePolicy: .reloadIgnoringLocalAndRemoteCacheData,
+        timeoutDuration: timeoutDuration,
+        maxRetries: maxRetries)
+    }
   }
-}
+
+  extension Endpoint where Response == ReturnConfig {
+    fileprivate static func updateConfigDescription(
+      id: String,
+      version: String,
+      request: EviPostedConfigVersionDescription,
+      timeoutDuration: TimeInterval,
+      maxRetries: Int
+    ) -> Endpoint<ReturnConfig> {
+      Endpoint(
+        path: "/v0/evi/configs/{id}/version/{version}",
+        method: .patch,
+        headers: ["Content-Type": "application/json"],
+        body: request,
+        cachePolicy: .reloadIgnoringLocalAndRemoteCacheData,
+        timeoutDuration: timeoutDuration,
+        maxRetries: maxRetries)
+    }
+  }
+#endif
