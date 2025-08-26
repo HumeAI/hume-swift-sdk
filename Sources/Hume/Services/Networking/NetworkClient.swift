@@ -157,8 +157,7 @@ class NetworkClientImpl: NetworkClient {
       requestBuilder = try await customTokenProvider().updateRequest(requestBuilder)
     } else {
       // Use the streamlined HumeAuth approach
-      let (key, value) = try await auth.authHeader()
-      requestBuilder = requestBuilder.addHeader(key: key, value: value)
+      requestBuilder = try await auth.authenticate(requestBuilder)
     }
 
     if let headers = endpoint.headers {

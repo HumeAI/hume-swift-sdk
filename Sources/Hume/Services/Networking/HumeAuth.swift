@@ -9,29 +9,38 @@ public enum HumeAuth {
 }
 
 extension HumeAuth {
-  func authHeader() async throws -> (String, String) {
+  /// Adds authentication to a RequestBuilder for HTTP requests
+  func authenticate(_ requestBuilder: RequestBuilder) async throws -> RequestBuilder {
     switch self {
     case .accessToken(let token):
-      return ("Authorization", "Bearer \(token)")
+      return requestBuilder.addHeader(key: "Authorization", value: "Bearer \(token)")
     case .accessTokenProvider(let provider):
-      return ("Authorization", "Bearer \(try await provider())")
+      return requestBuilder.addHeader(key: "Authorization", value: "Bearer \(try await provider())")
     #if HUME_SERVER
     case .apiKey(let key):
-      return ("X-API-Key", key)
+      return requestBuilder.addHeader(key: "X-API-Key", value: key)
     #endif
     }
   }
   
-  func queryParam() async throws -> (String, String) {
+  /// Adds authentication to URLComponents for WebSocket connections
+  func authenticate(_ components: inout URLComponents) async throws {
     switch self {
     case .accessToken(let token):
-      return ("accessToken", token)
+      addQueryItem(&components, name: "accessToken", value: token)
     case .accessTokenProvider(let provider):
-      return ("accessToken", try await provider())
+      addQueryItem(&components, name: "accessToken", value: try await provider())
     #if HUME_SERVER
     case .apiKey(let key):
-      return ("apiKey", key)
+      addQueryItem(&components, name: "apiKey", value: key)
     #endif
     }
+  }
+  
+  private func addQueryItem(_ components: inout URLComponents, name: String, value: String) {
+    if components.queryItems == nil {
+      components.queryItems = []
+    }
+    components.queryItems?.append(URLQueryItem(name: name, value: value))
   }
 }

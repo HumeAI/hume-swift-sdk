@@ -27,10 +27,11 @@ public class Chat: NSObject {
 
     var components = URLComponents(string: "wss://\(host)/v0/evi/chat")
     
-    let (queryName, queryValue) = try await options.queryParam()
-    components?.queryItems = [
-      URLQueryItem(name: queryName, value: queryValue)
-    ]
+    // Add authentication to URLComponents
+    if var urlComponents = components {
+      try await options.authenticate(&urlComponents)
+      components = urlComponents
+    }
     if let configId = chatConnectOptions?.configId {
       components?.queryItems?.append(URLQueryItem(name: "config_id", value: configId))
     }
