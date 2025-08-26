@@ -3,9 +3,7 @@ import Foundation
 public enum HumeAuth {
   case accessToken(String)
   case accessTokenProvider(() async throws -> String)
-  #if HUME_SERVER
-    case apiKey(String)
-  #endif
+  case apiKey(String)
 }
 
 extension HumeAuth {
@@ -16,10 +14,8 @@ extension HumeAuth {
       return requestBuilder.addHeader(key: "Authorization", value: "Bearer \(token)")
     case .accessTokenProvider(let provider):
       return requestBuilder.addHeader(key: "Authorization", value: "Bearer \(try await provider())")
-    #if HUME_SERVER
-      case .apiKey(let key):
-        return requestBuilder.addHeader(key: "X-API-Key", value: key)
-    #endif
+    case .apiKey(let key):
+      return requestBuilder.addHeader(key: "X-API-Key", value: key)
     }
   }
 
@@ -30,10 +26,8 @@ extension HumeAuth {
       addQueryItem(&components, name: "accessToken", value: token)
     case .accessTokenProvider(let provider):
       addQueryItem(&components, name: "accessToken", value: try await provider())
-    #if HUME_SERVER
-      case .apiKey(let key):
-        addQueryItem(&components, name: "apiKey", value: key)
-    #endif
+    case .apiKey(let key):
+      addQueryItem(&components, name: "apiKey", value: key)
     }
   }
 

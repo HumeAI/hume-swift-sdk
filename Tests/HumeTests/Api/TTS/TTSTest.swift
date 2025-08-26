@@ -5,9 +5,11 @@
 //  Created by AI Assistant on 12/19/24.
 //
 
+#if HUME_SERVER
 import XCTest
 
 @testable import Hume
+@testable import HumeServer
 
 final class TTSTest: XCTestCase {
 
@@ -16,14 +18,8 @@ final class TTSTest: XCTestCase {
   override func setUp() {
     // Get API key from environment variable
     if let apiKey = ProcessInfo.processInfo.environment["HUME_API_KEY"] {
-      // Test both authentication methods when available
-      #if HUME_SERVER
-        // Use API key for server-side testing
-        self.client = HumeClient(options: .apiKey(key: apiKey))
-      #else
-        // Use access token for client-side testing
-        self.client = HumeClient(options: .accessToken(token: apiKey))
-      #endif
+      // Use API key for server-side testing
+      self.client = HumeClient(options: .apiKey(key: apiKey))
     } else {
       self.client = nil
     }
@@ -126,62 +122,61 @@ final class TTSTest: XCTestCase {
     }
   }
 
-  #if HUME_SERVER
-    func test_apiKeyAuthentication() async throws {
-      // Skip test if no API key is available
-      guard let client = self.client else {
-        throw XCTSkip("HUME_API_KEY environment variable not set")
-        return
-      }
+  func test_apiKeyAuthentication() async throws {
+    // Skip test if no API key is available
+    guard let client = self.client else {
+      throw XCTSkip("HUME_API_KEY environment variable not set")
+    }
 
-      // Verify that the client was initialized with API key authentication
-      // This test ensures that the API key option is working correctly
-      XCTAssertNotNil(client)
+    // Verify that the client was initialized with API key authentication
+    // This test ensures that the API key option is working correctly
+    XCTAssertNotNil(client)
 
-      // Test a simple TTS request to verify API key authentication works
-      let request = PostedTts(
-        context: .postedContextWithUtterances(
-          PostedContextWithUtterances(
-            utterances: [
-              PostedUtterance(
-                description: "API Key test",
-                speed: 1.0,
-                trailingSilence: 0.5,
-                text: "Testing API key authentication.",
-                voice: .postedUtteranceVoiceWithName(
-                  PostedUtteranceVoiceWithName(
-                    name: "test-voice",
-                    provider: .humeAi
-                  )
+    // Test a simple TTS request to verify API key authentication works
+    let request = PostedTts(
+      context: .postedContextWithUtterances(
+        PostedContextWithUtterances(
+          utterances: [
+            PostedUtterance(
+              description: "API Key test",
+              speed: 1.0,
+              trailingSilence: 0.5,
+              text: "Testing API key authentication.",
+              voice: .postedUtteranceVoiceWithName(
+                PostedUtteranceVoiceWithName(
+                  name: "test-voice",
+                  provider: .humeAi
                 )
               )
-            ]
-          )
-        ),
-        format: Format.mp3(FormatMp3()),
-        numGenerations: 1,
-        splitUtterances: false,
-        stripHeaders: false,
-        utterances: [
-          PostedUtterance(
-            description: "API Key test",
-            speed: 1.0,
-            trailingSilence: 0.5,
-            text: "Testing API key authentication.",
-            voice: .postedUtteranceVoiceWithName(
-              PostedUtteranceVoiceWithName(
-                name: "test-voice",
-                provider: .humeAi
-              )
+            )
+          ]
+        )
+      ),
+      numGenerations: 1,
+      splitUtterances: false,
+      stripHeaders: false,
+      utterances: [
+        PostedUtterance(
+          description: "API Key test",
+          speed: 1.0,
+          trailingSilence: 0.5,
+          text: "Testing API key authentication.",
+          voice: .postedUtteranceVoiceWithName(
+            PostedUtteranceVoiceWithName(
+              name: "test-voice",
+              provider: .humeAi
             )
           )
-        ],
-        instantMode: false
-      )
+        )
+      ],
+      instantMode: false,
+      format: Format.mp3(FormatMp3())
+    )
 
-      // This should work with API key authentication
-      let result = try await client.tts.tts.synthesizeJson(request: request)
-      XCTAssertNotNil(result)
-    }
-  #endif
+    // This should work with API key authentication
+    let result = try await client.tts.tts.synthesizeJson(request: request)
+    XCTAssertNotNil(result)
+  }
 }
+
+#endif

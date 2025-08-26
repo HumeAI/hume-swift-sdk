@@ -9,14 +9,9 @@ import Foundation
 
 public class HumeClient {
   public enum Options {
-    /// Use an access token with the Hume APIs
     case accessToken(token: String)
-    /// Use a closure to provide an access token asynchronously
     case accessTokenProvider(() async throws -> String)
-    #if HUME_SERVER
-      /// Use an API key with the Hume APIs (server-side only)
-      case apiKey(key: String)
-    #endif
+    case apiKey(key: String)
   }
 
   private let options: HumeClient.Options
@@ -47,10 +42,8 @@ extension HumeClient.Options {
       return .accessToken(token)
     case .accessTokenProvider(let provider):
       return .accessTokenProvider(provider)
-    #if HUME_SERVER
-      case .apiKey(let key):
-        return .apiKey(key)
-    #endif
+    case .apiKey(let key):
+      return .apiKey(key)
     }
   }
 }

@@ -657,11 +657,8 @@ public enum ${def.name}: Codable, Hashable {
    * Wraps content with conditional compilation directives for server-side only types
    */
   private wrapWithAvailability(content: string, availability: Availability): string {
-    if (availability === "serverOnly") {
-      return `#if HUME_SERVER
-${content}
-#endif`;
-    }
+    // No longer wrap serverOnly content with conditional compilation
+    // Server-only functionality is now controlled by module imports
     return content;
   }
 

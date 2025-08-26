@@ -33,13 +33,11 @@ let package = Package(
       ]),
     .testTarget(
       name: "HumeTests",
-      dependencies: ["Hume"],
-      path: "Tests/HumeTests"
-    ),
-    .testTarget(
-      name: "HumeServerTests",
-      dependencies: ["HumeServer", "Hume"],
-      path: "Tests/HumeServerTests"
+      dependencies: ["Hume", "HumeServer"],
+      path: "Tests/HumeTests",
+      swiftSettings: [
+        .define("HUME_SERVER", .when(platforms: [.macOS, .linux]))
+      ]
     ),
     .target(
       name: "HumeTestingUtils",
