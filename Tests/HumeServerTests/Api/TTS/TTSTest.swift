@@ -32,8 +32,7 @@ final class TTSTest: XCTestCase {
   func test_synthesizeJson_basicRequest() async throws {
     // Skip test if no API key is available
     guard let client = self.client else {
-      XCTSkip("HUME_API_KEY environment variable not set")
-      return
+      throw XCTSkip("HUME_API_KEY environment variable not set")
     }
 
     // Create a basic TTS request
@@ -98,8 +97,7 @@ final class TTSTest: XCTestCase {
   func test_synthesizeJson_errorHandling() async throws {
     // Skip test if no API key is available
     guard let client = self.client else {
-      XCTSkip("HUME_API_KEY environment variable not set")
-      return
+      throw XCTSkip("HUME_API_KEY environment variable not set")
     }
 
     // Create an invalid request (missing required fields)
@@ -131,7 +129,7 @@ final class TTSTest: XCTestCase {
     func test_apiKeyAuthentication() async throws {
       // Skip test if no API key is available
       guard let client = self.client else {
-        XCTSkip("HUME_API_KEY environment variable not set")
+        throw XCTSkip("HUME_API_KEY environment variable not set")
         return
       }
 

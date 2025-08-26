@@ -8,8 +8,8 @@ public class Chat: NSObject {
 
   private let auth: HumeAuth
 
-  init(options: HumeAuth) {
-    self.auth = options
+  init(auth: HumeAuth) {
+    self.auth = auth
   }
 
   public func connect(

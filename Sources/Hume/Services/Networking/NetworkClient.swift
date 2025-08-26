@@ -151,13 +151,13 @@ class NetworkClientImpl: NetworkClient {
 
 extension NetworkClientImpl {
   static func makeHumeClient(
-    options: HumeAuth,
+    auth: HumeAuth,
     networkingService: NetworkingService
   ) -> NetworkClientImpl {
     let host: String = SDKConfiguration.default.host
     let baseURL = URL(string: "https://\(host)")!
     return .init(
-      baseURL: baseURL, auth: options, networkingService: networkingService)
+      baseURL: baseURL, auth: auth, networkingService: networkingService)
   }
 }
 

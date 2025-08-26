@@ -4,12 +4,12 @@ public class EmpathicVoiceClient {
   //  private let networkClient: NetworkClient
   private let auth: HumeAuth
 
-  init(networkClient: NetworkClient, options: HumeAuth) {
+  init(networkClient: NetworkClient, auth: HumeAuth) {
     // self.networkClient = networkClient
-    self.auth = options
+    self.auth = auth
   }
 
-  public lazy var chat: Chat = { Chat(options: auth) }()
+  public lazy var chat: Chat = { Chat(auth: auth) }()
 
   // public lazy var configs: Configs = { Configs(networkClient: networkClient) }()
 }
