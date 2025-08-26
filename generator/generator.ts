@@ -4,6 +4,7 @@ import * as OA from "./parse_openapi";
 import type { JsonSchema } from "./parse_openapi";
 import { camelCase } from "change-case";
 import { calculateSchemaDirections, type Direction } from "./directions";
+import { calculateSchemaAvailabilities, type Availability } from "./availability";
 import {
   calculateSchemaNamespaces,
   getNamespace,
@@ -69,6 +70,7 @@ const pascalCase = (str: string): string => {
 const applyEmotionScoresSpecialCase = (
   schema: JsonSchema,
   direction: Direction,
+  availability: Availability,
 ): { expr: SwiftType; defs: Record<string, SwiftDefinition> } | null => {
   if ((schema as any).schemaKey !== "evi:EmotionScores") {
     return null;
@@ -110,6 +112,7 @@ const applyEmotionScoresSpecialCase = (
       keyName: prop.keyName,
     })),
     direction: direction,
+    availability: availability,
   };
 
   // Change the schema kind to prevent regular object processing
@@ -220,6 +223,7 @@ const parseDiscriminatedUnionFromAnyOfRefs = (
     step: Step,
   ) => ReturnType<typeof schemaToSwiftType>,
   direction: Direction,
+  availability: Availability,
   currentNamespace: Namespace,
 ): ReturnType<typeof schemaToSwiftType> | null => {
   const variants = schema.anyOf.map((ref, i) => {
@@ -306,6 +310,7 @@ const parseDiscriminatedUnionFromAnyOfRefs = (
         ? discriminatorValuesArray
         : undefined,
     direction: direction,
+    availability: availability,
   };
   return {
     expr: {
@@ -328,6 +333,7 @@ const schemaToSwiftType = (
   lookupSchema: (name: string, namespace: Namespace) => JsonSchema | null,
   back: null | Back<JsonSchema, Step> = null,
   direction: Direction,
+  availability: Availability,
   currentNamespace: Namespace,
 ): { expr: SwiftType; defs: Record<string, SwiftDefinition> } => {
   const recurse = (
@@ -343,6 +349,7 @@ const schemaToSwiftType = (
         back,
       },
       direction,
+      availability,
       currentNamespace,
     );
   };
@@ -356,7 +363,7 @@ const schemaToSwiftType = (
   const todo = (message: string) => result({ type: "TODO", message });
 
   // Apply special case handling for EmotionScores
-  const emotionScoresResult = applyEmotionScoresSpecialCase(schema, direction);
+  const emotionScoresResult = applyEmotionScoresSpecialCase(schema, direction, availability);
   if (emotionScoresResult) {
     return result(emotionScoresResult.expr, emotionScoresResult.defs);
   }
@@ -376,6 +383,7 @@ const schemaToSwiftType = (
         lookupSchema,
         recurse,
         direction,
+        availability,
         currentNamespace,
       );
       if (discriminatedUnionResult) {
@@ -439,6 +447,7 @@ const schemaToSwiftType = (
             name: unionName,
             variants: cases.map((c) => c.type),
             direction: direction,
+            availability: availability,
           };
 
           return result(
@@ -569,6 +578,7 @@ const schemaToSwiftType = (
             ? discriminatorValuesArray
             : undefined,
         direction: direction,
+        availability: availability,
       };
 
       return result(
@@ -609,6 +619,7 @@ const schemaToSwiftType = (
         name: enumName,
         members,
         direction: direction,
+        availability: availability,
       };
       return result(
         { type: "Reference", name: enumName },
@@ -641,7 +652,13 @@ const schemaToSwiftType = (
       console.log("Using String type for stringNumberBool for simplicity");
       return result({ type: "String" }, {});
     case "object": {
-      const name = swiftName(schema);
+      let name = ""
+      try {
+       name = swiftName(schema, surroundingPropertyName(back));
+      } catch (e) {
+        console.log({schema, back, surroundingSchemaName: surroundingSchemaName(back), surroundingPropertyName: surroundingPropertyName(back)});
+        throw e
+      }
 
 
 
@@ -707,6 +724,7 @@ const schemaToSwiftType = (
         name,
         properties,
         direction: direction,
+        availability: availability,
       };
       defs[name] = struct;
       return result({ type: "Reference", name: struct.name }, defs);
@@ -766,6 +784,7 @@ const openapiOperationToSDKMethod = (
   op: OA.OpenAPIOperation,
   lookupSchema: (name: string, namespace: Namespace) => JsonSchema | null,
   namespace: Namespace,
+  availability: Availability,
 ): SDKMethod | null => {
   if (op.kind === "ignored") {
     return null;
@@ -797,6 +816,7 @@ const openapiOperationToSDKMethod = (
           lookupSchema,
           null,
           "sent",
+          "full", // Parameters are typically full availability 
           namespace,
         );
         let type = expr;
@@ -851,9 +871,10 @@ const openapiOperationToSDKMethod = (
         lookupSchema,
         null,
         "received",
+        "full", // Response schemas are typically full availability
         namespace,
       )
-      : { expr: { type: "void" as const } };
+      : { expr: { type: "EmptyResponse" as const } };
     returnType = expr;
   }
 
@@ -863,6 +884,7 @@ const openapiOperationToSDKMethod = (
     verb,
     parameters: sdkParameters,
     returnType,
+    availability,
   };
 };
 
@@ -942,7 +964,7 @@ const buildSwiftSdk = (specs: OA.KnownSpecs): SwiftSDK => {
 
   // First we collect everything: endpoints, schemas, and messages
 
-  const allEndpoints: Array<Endpoint> = [specs.tts]
+  const allEndpoints: Array<Endpoint> = [specs.tts, specs.evi]
     .flatMap((api) => {
       const pathEntries = Object.entries(api.paths);
       return pathEntries.flatMap(
@@ -963,7 +985,20 @@ const buildSwiftSdk = (specs: OA.KnownSpecs): SwiftSDK => {
     // but it's more straightforward for now to just exclude the voices endpoints (which are the only non-access-token REST endpoints under /v0tts)
     // and we also don't include the evi-openapi spec (which has all the resources like /v0/evi/configs and /v0/evi/tools which are non-access-token)
     // and only include the evi-asyncapi spec (which has the access-token-accessible /v0/evi/chat websocket)
-    .filter(({ path }) => !path.startsWith("/v0/tts/voices"));
+    .filter(({ path }) => {
+      if (path.startsWith("/v0/tts/voices")) {
+        return false
+      }
+      if (path.startsWith("/v0/tts")) {
+        return true
+      }
+      // TODO: Re-enable /v0/evi/configs endpoints after authentication refactor is complete
+      // These endpoints are temporarily omitted to reduce diff size during the HumeAuth refactor
+      if (path.startsWith("/v0/evi/configs")) {
+        return false  // Temporarily disabled
+      }
+      return false
+    });
 
   const collectedByResourceName: Record<string, Array<Endpoint>> = _.groupBy(
     allEndpoints,
@@ -979,8 +1014,14 @@ const buildSwiftSdk = (specs: OA.KnownSpecs): SwiftSDK => {
     allSchemas[prefixedKey] = schema;
     // Update the schemaKey to maintain traceability
     (schema as any).schemaKey = prefixedKey;
-    
+  }
 
+  // Add EVI OpenAPI schemas with evi: prefix
+  for (const [key, schema] of Object.entries(specs.evi.components.schemas)) {
+    const prefixedKey = `evi:${key}`;
+    allSchemas[prefixedKey] = schema;
+    // Update the schemaKey to maintain traceability
+    (schema as any).schemaKey = prefixedKey;
   }
 
   // Add EVI AsyncAPI schemas with evi: prefix
@@ -1020,15 +1061,19 @@ const buildSwiftSdk = (specs: OA.KnownSpecs): SwiftSDK => {
         `Expected all endpoints to have the same namespace`,
       );
       const methods = endpoints
-        .map(({ path, verb, operation }) =>
-          openapiOperationToSDKMethod(
+        .map(({ path, verb, operation }) => {
+          // Determine endpoint availability based on path
+          const endpointAvailability: Availability = path.includes("/configs") ? "serverOnly" : "full";
+          
+          return openapiOperationToSDKMethod(
             path,
             verb,
             operation as OA.OpenAPIOperation,
             lookupSchema,
             namespace,
-          ),
-        )
+            endpointAvailability,
+          );
+        })
         .filter(outNulls);
       return { namespace, resourceName, methods };
     },
@@ -1061,8 +1106,20 @@ const buildSwiftSdk = (specs: OA.KnownSpecs): SwiftSDK => {
     allSchemas,
   );
 
+  const schemaToAvailability = calculateSchemaAvailabilities(
+    allEndpoints,
+    specs.eviAsync.channels,
+    specs.eviAsync.components.messages,
+    allSchemas,
+  );
+
   // Set namespace for all prefixed schemas
   for (const schemaKey in specs.eviAsync.components.schemas) {
+    schemaToNamespace.set(`evi:${schemaKey}`, "empathicVoice");
+  }
+
+  // Set namespace for EVI OpenAPI schemas
+  for (const schemaKey in specs.evi.components.schemas) {
     schemaToNamespace.set(`evi:${schemaKey}`, "empathicVoice");
   }
 
@@ -1076,8 +1133,8 @@ const buildSwiftSdk = (specs: OA.KnownSpecs): SwiftSDK => {
   // We now walk through all the schemas and add them to the SDK as definitions.
   // We also add any special cases (like EmotionScores) as definitions.
 
-      
-  
+
+
   Object.entries(allSchemas).forEach(([name, schema]) => {
     if (schema.kind === "ignored") {
       return;
@@ -1096,6 +1153,7 @@ const buildSwiftSdk = (specs: OA.KnownSpecs): SwiftSDK => {
 
     const namespace = schemaToNamespace.get(schemaKey);
     const direction = schemaToDirection.get(schemaKey);
+    const availability = schemaToAvailability.get(schemaKey);
 
     // Skip processing if no namespace was determined
     if (!namespace) {
@@ -1113,6 +1171,14 @@ const buildSwiftSdk = (specs: OA.KnownSpecs): SwiftSDK => {
       return;
     }
 
+    // Skip processing if no availability was determined (this should not happen with proper reference graph)
+    if (!availability) {
+      console.warn(
+        `Warning: No availability determined for schema ${schemaKey}, skipping`,
+      );
+      return;
+    }
+
     // Skip orphaned schemas (schemas that are not referenced by any endpoints)
     if (direction === "orphaned") {
       console.log(`Skipping orphaned schema: ${schemaKey}`);
@@ -1124,6 +1190,7 @@ const buildSwiftSdk = (specs: OA.KnownSpecs): SwiftSDK => {
       lookupSchema,
       null,
       direction,
+      availability,
       namespace,
     );
 
@@ -1136,6 +1203,7 @@ const buildSwiftSdk = (specs: OA.KnownSpecs): SwiftSDK => {
           name: name,
           reason: expr.message,
           direction: direction,
+          availability: availability,
         };
         addDefinition(namespace, commentedOutDef);
       }

@@ -33,12 +33,12 @@ enum NetworkClientNotification {
 
 class NetworkClientImpl: NetworkClient {
   private let baseURL: URL
-  private let tokenProvider: TokenProvider
+  private let auth: HumeAuth
   private let networkingService: NetworkingService
 
-  init(baseURL: URL, tokenProvider: @escaping TokenProvider, networkingService: NetworkingService) {
+  init(baseURL: URL, options: HumeClient.Options, networkingService: NetworkingService) {
     self.baseURL = baseURL
-    self.tokenProvider = tokenProvider
+    self.auth = options
     self.networkingService = networkingService
   }
 
@@ -119,6 +119,8 @@ class NetworkClientImpl: NetworkClient {
       }
     }
   }
+  
+
 
   private func isRetryableError(_ error: Error) -> Bool {
     // Add logic to determine if an error is retryable
@@ -151,9 +153,12 @@ class NetworkClientImpl: NetworkClient {
       .addHeader(key: "Content-Type", value: "application/json")
 
     if let customTokenProvider {
+      // For backward compatibility with custom token providers
       requestBuilder = try await customTokenProvider().updateRequest(requestBuilder)
     } else {
-      requestBuilder = try await tokenProvider().updateRequest(requestBuilder)
+      // Use the streamlined HumeAuth approach
+      let (key, value) = try await auth.authHeader()
+      requestBuilder = requestBuilder.addHeader(key: key, value: value)
     }
 
     if let headers = endpoint.headers {
@@ -169,13 +174,13 @@ class NetworkClientImpl: NetworkClient {
 
 extension NetworkClientImpl {
   static func makeHumeClient(
-    tokenProvider: @escaping TokenProvider,
+    options: HumeClient.Options,
     networkingService: NetworkingService
   ) -> NetworkClientImpl {
     let host: String = SDKConfiguration.default.host
     let baseURL = URL(string: "https://\(host)")!
     return .init(
-      baseURL: baseURL, tokenProvider: tokenProvider, networkingService: networkingService)
+      baseURL: baseURL, options: options, networkingService: networkingService)
   }
 }
 
@@ -184,4 +189,4 @@ extension NetworkClientImpl {
 typealias NetworkClientResponse = Decodable & Hashable
 typealias NetworkClientRequest = Encodable & Hashable
 
-struct EmptyResponse: NetworkClientResponse {}
+public struct EmptyResponse: NetworkClientResponse {}

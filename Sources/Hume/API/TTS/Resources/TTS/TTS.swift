@@ -64,6 +64,7 @@ public class TTS {
 }
 
 // MARK: - Endpoint Definitions
+
 extension Endpoint where Response == ReturnTts {
   fileprivate static func synthesizeJson(
     request: PostedTts,

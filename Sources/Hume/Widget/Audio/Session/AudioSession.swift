@@ -1,238 +1,243 @@
-import AVFAudio
-import Combine
-import Foundation
+#if HUME_WIDGET
+  import AVFAudio
+  import Combine
+  import Foundation
 
-protocol AudioSessionDelegate: AnyObject {
-  func audioEngineDidChangeConfiguration()
-  func audioSessionRouteDidChange(reason: AVAudioSession.RouteChangeReason)
-  func audioSessionInterruptionDidBegin()
-  func audioSessionInterruptionDidEnd(shouldResume: Bool)
-}
-
-actor AudioSession: Sendable {
-  private let audioSession = AVAudioSession.sharedInstance()
-  internal var lastInputPort: AVAudioSessionPortDescription?
-  private var notificationHandler: AudioSessionNotificationHandler?
-
-  static let shared = AudioSession()
-
-  private var activeConfig: AudioHubConfiguration? = nil
-  private var isActive: Bool = false
-
-  @Published var isDeviceSpeakerActive: Bool = false
-  weak var delegate: (any AudioSessionDelegate)? = nil
-
-  nonisolated init() {
-    setupNotificationHandling()
+  protocol AudioSessionDelegate: AnyObject {
+    func audioEngineDidChangeConfiguration()
+    func audioSessionRouteDidChange(reason: AVAudioSession.RouteChangeReason)
+    func audioSessionInterruptionDidBegin()
+    func audioSessionInterruptionDidEnd(shouldResume: Bool)
   }
 
-  func setDelegate(_ delegate: any AudioSessionDelegate) {
-    self.delegate = delegate
-  }
+  actor AudioSession: Sendable {
+    private let audioSession = AVAudioSession.sharedInstance()
+    internal var lastInputPort: AVAudioSessionPortDescription?
+    private var notificationHandler: AudioSessionNotificationHandler?
 
-  func start() throws {
-    Logger.info("Starting audio session")
-    guard activeConfig != nil else {
-      throw AudioSessionError.unconfigured
+    static let shared = AudioSession()
+
+    private var activeConfig: AudioHubConfiguration? = nil
+    private var isActive: Bool = false
+
+    @Published var isDeviceSpeakerActive: Bool = false
+    weak var delegate: (any AudioSessionDelegate)? = nil
+
+    nonisolated init() {
+      setupNotificationHandling()
     }
-    guard !isActive else {
-      Logger.warn("Audio session is already active.")
-      return
+
+    func setDelegate(_ delegate: any AudioSessionDelegate) {
+      self.delegate = delegate
     }
-    try audioSession.setActive(true)
-    isActive = true
-    try handleAudioRouting()
-  }
 
-  func stop() throws {
-    Logger.info("Stopping audio session")
-    try audioSession.setActive(false, options: [.notifyOthersOnDeactivation])
-    isActive = false
-  }
-
-  // MARK: Configuring
-  func configure(with configuration: AudioHubConfiguration) throws {
-    Logger.info("Configuring audio session with \(configuration)")
-    guard activeConfig != configuration else {
-      Logger.warn("Audio session already configured for \(configuration).")
-      return
-    }
-    activeConfig = configuration
-
-    do {
-      switch configuration {
-      case .inputOutput:
-        try audioSession.setPreferredIOBufferDuration(Constants.InputBufferDuration)  //20 ms as per EVI docs
-        try audioSession.setPreferredSampleRate(Constants.SampleRate)
-      case .outputOnly:
-        break
+    func start() throws {
+      Logger.info("Starting audio session")
+      guard activeConfig != nil else {
+        throw AudioSessionError.unconfigured
       }
-
-      try update(with: configuration)
-      Logger.info("Audio session configured successfully")
-    } catch let error as AudioSessionError {
-      throw error
-    } catch {
-      Logger.error("Failed to configure audio session", error)
-      throw AudioSessionError.unsupportedConfiguration(reason: "Failed to configure audio session")
-    }
-  }
-
-  private func update(with config: AudioHubConfiguration) throws {
-    let (category, mode, options) = (config.category, config.mode, config.options)
-    guard AVAudioSession.sharedInstance().availableCategories.contains(category) else {
-      throw AudioSessionError.unsupportedConfiguration(reason: "\(category) is not supported.")
-    }
-    Logger.debug(
-      "Updating audio session to category: \(category), mode: \(mode), options: \(options)")
-    Logger.debug("Current category options: \(audioSession.categoryOptions.rawValue)")
-    try audioSession.setCategory(category, mode: mode, options: options)
-    Logger.debug("Updated category options: \(audioSession.categoryOptions.rawValue)")
-  }
-
-  private func setupNotificationHandling() {
-    let handler = AudioSessionNotificationHandler(
-      onRouteChange: { [weak self] reason in
-        guard let self else { return }
-        Task { [weak self] in
-          guard let self else { return }
-          await self.didReceiveRouteChange(reason: reason)
-        }
-      },
-      onInterruptionBegan: { [weak self] in
-        guard let self else { return }
-        Task { [weak self] in
-          guard let self else { return }
-          await self.didReceiveInterruptionBegan()
-        }
-      },
-      onInterruptionEnded: { [weak self] shouldResume in
-        guard let self else { return }
-        Task { [weak self] in
-          guard let self else { return }
-          await self.didReceiveInterruptionEnded(shouldResume: shouldResume)
-        }
-      },
-      onEngineConfigurationChanged: { [weak self] in
-        guard let self else { return }
-        Task { [weak self] in
-          guard let self else { return }
-          await self.didReceiveEngineConfigurationChange()
-        }
+      guard !isActive else {
+        Logger.warn("Audio session is already active.")
+        return
       }
-    )
-    handler.register()
-    self.notificationHandler = handler
-  }
-
-  // MARK: - Audio Routing
-  private func overrideReceiverIfNeeded(ioConfig: AudioSessionIO) throws {
-    let defaultToSpeaker = activeConfig?.options.contains(.defaultToSpeaker) ?? false
-    if (ioConfig.output.portType == .builtInReceiver || ioConfig.output.portType == .builtInSpeaker)
-      && defaultToSpeaker
-    {
-      Logger.info("Overriding to speaker output")
-      try audioSession.overrideOutputAudioPort(.speaker)
-      self.isDeviceSpeakerActive = true
-    } else {
-      Logger.info("Setting output override to none")
-      try audioSession.overrideOutputAudioPort(.none)
-      isDeviceSpeakerActive = false
+      try audioSession.setActive(true)
+      isActive = true
+      try handleAudioRouting()
     }
-  }
 
-  private func handleAudioRouting() throws {
-    guard activeConfig == .inputOutput else {
-      Logger.info("handleAudioRouting skipped (output-only)")
-      if audioSession.preferredInput != nil {
-        Logger.debug("Clearing preferred input")
-        try audioSession.setPreferredInput(nil)
+    func stop() throws {
+      Logger.info("Stopping audio session")
+      try audioSession.setActive(false, options: [.notifyOthersOnDeactivation])
+      isActive = false
+    }
+
+    // MARK: Configuring
+    func configure(with configuration: AudioHubConfiguration) throws {
+      Logger.info("Configuring audio session with \(configuration)")
+      guard activeConfig != configuration else {
+        Logger.warn("Audio session already configured for \(configuration).")
+        return
       }
-      return
-    }
+      activeConfig = configuration
 
-    let ioConfig = try getBestFitAudioPorts()
-
-    // Handle speaker override
-    Logger.info("Handling audio routing change")
-    Logger.info("Output name: \(ioConfig.output.portName)")
-    Logger.info("Input name: \(ioConfig.input.portName)")
-
-    if let lastInputPort, lastInputPort.portName != ioConfig.input.portName {
-      Logger.debug("input did change from \(lastInputPort.portName) to \(ioConfig.input.portName)")
-
-      // Set preferred input
-      Logger.debug("setting preferred input route to \(ioConfig.input.portName)")
-      try audioSession.setPreferredInput(ioConfig.input)
-    }
-    self.lastInputPort = ioConfig.input
-
-    try overrideReceiverIfNeeded(ioConfig: ioConfig)
-  }
-
-  private func getBestFitAudioPorts() throws -> AudioSessionIO {
-    let (inputPort, outputPort): (AVAudioSessionPortDescription, AVAudioSessionPortDescription)
-
-    // Get the current outputs and available inputs
-    let outputs = audioSession.currentRoute.outputs
-    guard let inputs = audioSession.availableInputs, !inputs.isEmpty else {
-      throw AudioSessionError.noAvailableDevices
-    }
-
-    // Validate the outputs for correct configuration
-    guard let output = outputs.first, outputs.count == 1 else {
-      throw AudioSessionError.multipleOutputRoutes
-    }
-    outputPort = output
-
-    // Check for a matching I/O port type, otherwise check for a non-built-in input
-    if let matchingPort = inputs.first(where: { $0.portType == output.portType }) {
-      inputPort = matchingPort
-    } else if let externalInput = inputs.first(where: { $0.portType != .builtInMic }) {
-      inputPort = externalInput
-    } else {
-      inputPort = inputs.first!  // already checked that non-empty
-    }
-
-    return AudioSessionIO(input: inputPort, output: outputPort)
-  }
-}
-
-// MARK: - Notification Handlers (actor-isolated)
-
-extension AudioSession {
-  private func didReceiveEngineConfigurationChange() {
-    self.delegate?.audioEngineDidChangeConfiguration()
-  }
-
-  private func didReceiveInterruptionBegan() {
-    self.delegate?.audioSessionInterruptionDidBegin()
-  }
-
-  private func didReceiveInterruptionEnded(shouldResume: Bool) {
-    self.delegate?.audioSessionInterruptionDidEnd(shouldResume: shouldResume)
-  }
-
-  private func didReceiveRouteChange(reason: AVAudioSession.RouteChangeReason) {
-    Logger.info("Route change notification received: \(reason)")
-
-    switch reason {
-    case .newDeviceAvailable, .oldDeviceUnavailable, .unknown, .wakeFromSleep,
-      .routeConfigurationChange:
       do {
-        if self.activeConfig == .inputOutput {
-          try handleAudioRouting()
-          delegate?.audioSessionRouteDidChange(reason: reason)
-        } else {
-          Logger.info("Skipping routing update in output-only config")
+        switch configuration {
+        case .inputOutput:
+          try audioSession.setPreferredIOBufferDuration(Constants.InputBufferDuration)  //20 ms as per EVI docs
+          try audioSession.setPreferredSampleRate(Constants.SampleRate)
+        case .outputOnly:
+          break
         }
+
+        try update(with: configuration)
+        Logger.info("Audio session configured successfully")
+      } catch let error as AudioSessionError {
+        throw error
       } catch {
-        Logger.error("Route change error: \(error.localizedDescription)")
+        Logger.error("Failed to configure audio session", error)
+        throw AudioSessionError.unsupportedConfiguration(
+          reason: "Failed to configure audio session")
       }
-    case .noSuitableRouteForCategory, .override, .categoryChange:
-      Logger.info("Skipping route change reason: \(reason)")
-    @unknown default:
-      Logger.warn("Unhandled route change type: \(reason)")
+    }
+
+    private func update(with config: AudioHubConfiguration) throws {
+      let (category, mode, options) = (config.category, config.mode, config.options)
+      guard AVAudioSession.sharedInstance().availableCategories.contains(category) else {
+        throw AudioSessionError.unsupportedConfiguration(reason: "\(category) is not supported.")
+      }
+      Logger.debug(
+        "Updating audio session to category: \(category), mode: \(mode), options: \(options)")
+      Logger.debug("Current category options: \(audioSession.categoryOptions.rawValue)")
+      try audioSession.setCategory(category, mode: mode, options: options)
+      Logger.debug("Updated category options: \(audioSession.categoryOptions.rawValue)")
+    }
+
+    private func setupNotificationHandling() {
+      let handler = AudioSessionNotificationHandler(
+        onRouteChange: { [weak self] reason in
+          guard let self else { return }
+          Task { [weak self] in
+            guard let self else { return }
+            await self.didReceiveRouteChange(reason: reason)
+          }
+        },
+        onInterruptionBegan: { [weak self] in
+          guard let self else { return }
+          Task { [weak self] in
+            guard let self else { return }
+            await self.didReceiveInterruptionBegan()
+          }
+        },
+        onInterruptionEnded: { [weak self] shouldResume in
+          guard let self else { return }
+          Task { [weak self] in
+            guard let self else { return }
+            await self.didReceiveInterruptionEnded(shouldResume: shouldResume)
+          }
+        },
+        onEngineConfigurationChanged: { [weak self] in
+          guard let self else { return }
+          Task { [weak self] in
+            guard let self else { return }
+            await self.didReceiveEngineConfigurationChange()
+          }
+        }
+      )
+      handler.register()
+      self.notificationHandler = handler
+    }
+
+    // MARK: - Audio Routing
+    private func overrideReceiverIfNeeded(ioConfig: AudioSessionIO) throws {
+      let defaultToSpeaker = activeConfig?.options.contains(.defaultToSpeaker) ?? false
+      if (ioConfig.output.portType == .builtInReceiver
+        || ioConfig.output.portType == .builtInSpeaker)
+        && defaultToSpeaker
+      {
+        Logger.info("Overriding to speaker output")
+        try audioSession.overrideOutputAudioPort(.speaker)
+        self.isDeviceSpeakerActive = true
+      } else {
+        Logger.info("Setting output override to none")
+        try audioSession.overrideOutputAudioPort(.none)
+        isDeviceSpeakerActive = false
+      }
+    }
+
+    private func handleAudioRouting() throws {
+      guard activeConfig == .inputOutput else {
+        Logger.info("handleAudioRouting skipped (output-only)")
+        if audioSession.preferredInput != nil {
+          Logger.debug("Clearing preferred input")
+          try audioSession.setPreferredInput(nil)
+        }
+        return
+      }
+
+      let ioConfig = try getBestFitAudioPorts()
+
+      // Handle speaker override
+      Logger.info("Handling audio routing change")
+      Logger.info("Output name: \(ioConfig.output.portName)")
+      Logger.info("Input name: \(ioConfig.input.portName)")
+
+      if let lastInputPort, lastInputPort.portName != ioConfig.input.portName {
+        Logger.debug(
+          "input did change from \(lastInputPort.portName) to \(ioConfig.input.portName)")
+
+        // Set preferred input
+        Logger.debug("setting preferred input route to \(ioConfig.input.portName)")
+        try audioSession.setPreferredInput(ioConfig.input)
+      }
+      self.lastInputPort = ioConfig.input
+
+      try overrideReceiverIfNeeded(ioConfig: ioConfig)
+    }
+
+    private func getBestFitAudioPorts() throws -> AudioSessionIO {
+      let (inputPort, outputPort): (AVAudioSessionPortDescription, AVAudioSessionPortDescription)
+
+      // Get the current outputs and available inputs
+      let outputs = audioSession.currentRoute.outputs
+      guard let inputs = audioSession.availableInputs, !inputs.isEmpty else {
+        throw AudioSessionError.noAvailableDevices
+      }
+
+      // Validate the outputs for correct configuration
+      guard let output = outputs.first, outputs.count == 1 else {
+        throw AudioSessionError.multipleOutputRoutes
+      }
+      outputPort = output
+
+      // Check for a matching I/O port type, otherwise check for a non-built-in input
+      if let matchingPort = inputs.first(where: { $0.portType == output.portType }) {
+        inputPort = matchingPort
+      } else if let externalInput = inputs.first(where: { $0.portType != .builtInMic }) {
+        inputPort = externalInput
+      } else {
+        inputPort = inputs.first!  // already checked that non-empty
+      }
+
+      return AudioSessionIO(input: inputPort, output: outputPort)
     }
   }
-}
+
+  // MARK: - Notification Handlers (actor-isolated)
+
+  extension AudioSession {
+    private func didReceiveEngineConfigurationChange() {
+      self.delegate?.audioEngineDidChangeConfiguration()
+    }
+
+    private func didReceiveInterruptionBegan() {
+      self.delegate?.audioSessionInterruptionDidBegin()
+    }
+
+    private func didReceiveInterruptionEnded(shouldResume: Bool) {
+      self.delegate?.audioSessionInterruptionDidEnd(shouldResume: shouldResume)
+    }
+
+    private func didReceiveRouteChange(reason: AVAudioSession.RouteChangeReason) {
+      Logger.info("Route change notification received: \(reason)")
+
+      switch reason {
+      case .newDeviceAvailable, .oldDeviceUnavailable, .unknown, .wakeFromSleep,
+        .routeConfigurationChange:
+        do {
+          if self.activeConfig == .inputOutput {
+            try handleAudioRouting()
+            delegate?.audioSessionRouteDidChange(reason: reason)
+          } else {
+            Logger.info("Skipping routing update in output-only config")
+          }
+        } catch {
+          Logger.error("Route change error: \(error.localizedDescription)")
+        }
+      case .noSuitableRouteForCategory, .override, .categoryChange:
+        Logger.info("Skipping route change reason: \(reason)")
+      @unknown default:
+        Logger.warn("Unhandled route change type: \(reason)")
+      }
+    }
+  }
+#endif

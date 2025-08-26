@@ -75,6 +75,190 @@
     "provider"
   ],
   "FormatWav.init": [],
+  "VoiceId.init": [
+    "id",
+    "provider"
+  ],
+  "VoiceName.init": [
+    "name",
+    "provider"
+  ],
+  "ReturnUserDefinedTool.init": [
+    "toolType",
+    "id",
+    "version",
+    "versionType",
+    "versionDescription",
+    "name",
+    "createdOn",
+    "modifiedOn",
+    "fallbackContent",
+    "description",
+    "parameters"
+  ],
+  "ReturnPrompt.init": [
+    "id",
+    "version",
+    "versionType",
+    "versionDescription",
+    "name",
+    "createdOn",
+    "modifiedOn",
+    "text"
+  ],
+  "ReturnPagedConfigs.init": [
+    "pageNumber",
+    "pageSize",
+    "totalPages",
+    "configsPage"
+  ],
+  "PostedConfig.init": [
+    "eviVersion",
+    "name",
+    "versionDescription",
+    "prompt",
+    "voice",
+    "languageModel",
+    "ellmModel",
+    "tools",
+    "builtinTools",
+    "eventMessages",
+    "nudges",
+    "timeouts",
+    "webhooks"
+  ],
+  "ReturnConfig.init": [
+    "id",
+    "version",
+    "eviVersion",
+    "versionDescription",
+    "name",
+    "createdOn",
+    "modifiedOn",
+    "prompt",
+    "voice",
+    "languageModel",
+    "ellmModel",
+    "tools",
+    "builtinTools",
+    "eventMessages",
+    "timeouts",
+    "nudges",
+    "webhooks"
+  ],
+  "PostedConfigVersion.init": [
+    "eviVersion",
+    "versionDescription",
+    "prompt",
+    "voice",
+    "languageModel",
+    "ellmModel",
+    "tools",
+    "builtinTools",
+    "eventMessages",
+    "timeouts",
+    "nudges",
+    "webhooks"
+  ],
+  "PostedConfigName.init": [
+    "name"
+  ],
+  "PostedConfigVersionDescription.init": [
+    "versionDescription"
+  ],
+  "PostedConfigPromptSpec.init": [
+    "id",
+    "version",
+    "text"
+  ],
+  "PostedLanguageModel.init": [
+    "modelProvider",
+    "modelResource",
+    "temperature"
+  ],
+  "PostedEllmModel.init": [
+    "allowShortResponses"
+  ],
+  "PostedUserDefinedToolSpec.init": [
+    "id",
+    "version"
+  ],
+  "PostedBuiltinTool.init": [
+    "name",
+    "fallbackContent"
+  ],
+  "PostedEventMessageSpecs.init": [
+    "onNewChat",
+    "onInactivityTimeout",
+    "onMaxDurationTimeout"
+  ],
+  "PostedNudgeSpec.init": [
+    "enabled",
+    "intervalSecs"
+  ],
+  "Inactivity.init": [
+    "durationSecs",
+    "enabled"
+  ],
+  "MaxDuration.init": [
+    "durationSecs",
+    "enabled"
+  ],
+  "PostedTimeoutSpecs.init": [
+    "inactivity",
+    "maxDuration"
+  ],
+  "PostedWebhookSpec.init": [
+    "url",
+    "events"
+  ],
+  "ReturnLanguageModel.init": [
+    "modelProvider",
+    "modelResource",
+    "temperature"
+  ],
+  "ReturnEllmModel.init": [
+    "allowShortResponses"
+  ],
+  "ReturnBuiltinTool.init": [
+    "toolType",
+    "name",
+    "fallbackContent"
+  ],
+  "ReturnEventMessageSpecs.init": [
+    "onNewChat",
+    "onInactivityTimeout",
+    "onMaxDurationTimeout"
+  ],
+  "ReturnTimeoutSpecs.init": [
+    "inactivity",
+    "maxDuration"
+  ],
+  "ReturnNudgeSpec.init": [
+    "enabled",
+    "intervalSecs"
+  ],
+  "ReturnWebhookSpec.init": [
+    "url",
+    "events"
+  ],
+  "PostedEventMessageSpec.init": [
+    "enabled",
+    "text"
+  ],
+  "ReturnEventMessageSpec.init": [
+    "enabled",
+    "text"
+  ],
+  "ReturnTimeoutSpec.init": [
+    "enabled",
+    "durationSecs"
+  ],
+  "ReturnVoice.init": [
+    "id",
+    "name",
+    "provider"
+  ],
   "AssistantInput.init": [
     "customSessionId",
     "text"

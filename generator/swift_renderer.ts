@@ -1,6 +1,7 @@
 import { $ } from "bun";
 import { camelCase } from "change-case";
 import type { Direction } from "./directions";
+import type { Availability } from "./availability";
 import { readFile, writeFile } from "fs/promises";
 import { readFileSync } from "fs";
 
@@ -15,6 +16,7 @@ export type SwiftType =
   | { type: "Reference"; name: string }
   | { type: "Dictionary"; key: SwiftType; value: SwiftType }
   | { type: "void" }
+  | { type: "EmptyResponse" }
   | { type: "Data" }
   | { type: "TODO"; message: string };
 
@@ -29,6 +31,7 @@ export type SwiftStruct = {
     isCommentedOut?: boolean;
   }>;
   direction: Direction;
+  availability: Availability;
 };
 
 export type SwiftClass = {
@@ -41,6 +44,7 @@ export type SwiftClass = {
     docstring?: string;
   }>;
   direction: Direction;
+  availability: Availability;
 };
 
 export type SwiftDictionaryWithAccessors = {
@@ -53,6 +57,7 @@ export type SwiftDictionaryWithAccessors = {
     docstring?: string;
   }>;
   direction: Direction;
+  availability: Availability;
 };
 
 export type SwiftEnum = {
@@ -60,6 +65,7 @@ export type SwiftEnum = {
   name: string;
   members: Array<[string, string]>;
   direction: Direction;
+  availability: Availability;
 };
 
 export type SwiftDiscriminatedUnion = {
@@ -73,6 +79,7 @@ export type SwiftDiscriminatedUnion = {
   }>;
   discriminatorValues?: Array<{ caseName: string; value: string }>;
   direction: Direction;
+  availability: Availability;
 };
 
 export type SwiftTypeAlias = {
@@ -80,6 +87,7 @@ export type SwiftTypeAlias = {
   name: string;
   underlyingType: SwiftType;
   direction: Direction;
+  availability: Availability;
 };
 
 export type SwiftCommentedOutDefinition = {
@@ -87,6 +95,7 @@ export type SwiftCommentedOutDefinition = {
   name: string;
   reason: string;
   direction: Direction;
+  availability: Availability;
 };
 
 export type SwiftUndiscriminatedUnion = {
@@ -94,6 +103,7 @@ export type SwiftUndiscriminatedUnion = {
   name: string;
   variants: Array<SwiftType>;
   direction: Direction;
+  availability: Availability;
 };
 
 export type SwiftDefinition =
@@ -119,6 +129,7 @@ export type SDKMethod = {
   path: string;
   parameters: Array<SDKMethodParam>;
   returnType: SwiftType;
+  availability: Availability;
 };
 
 export type File = {
@@ -192,13 +203,14 @@ export class SwiftRenderer {
     // Determine if this is a streaming method
     const isDataReturn = method.returnType.type === "Data";
 
+    let methodContent: string;
     if (isStreaming) {
       // For streaming methods, return AsyncThrowingStream
       const streamType = isDataReturn
         ? "Data"
         : this.renderSwiftType(method.returnType);
       const endpointMethodName = methodName.replace("Streaming", "Stream");
-      return `
+      methodContent = `
   public func ${methodName}(
     ${renderedParams}
   ) -> AsyncThrowingStream<${streamType}, Error> {
@@ -211,7 +223,7 @@ export class SwiftRenderer {
   }`;
     } else {
       // For regular methods, use networkClient.send
-      return `
+      methodContent = `
   public func ${methodName}(
     ${renderedParams}
   ) async throws -> ${this.renderSwiftType(method.returnType)} {
@@ -223,6 +235,8 @@ export class SwiftRenderer {
     )
   }`;
     }
+    
+    return methodContent;
   }
 
   public renderNamespaceClient(
@@ -230,8 +244,15 @@ export class SwiftRenderer {
     resourceNames: string[],
     basePath: string,
   ): File {
-    // Capitalize the namespace name for the class name
-    const className = namespaceName.toUpperCase() + "Client";
+    // Handle special cases for client class names
+    let className: string;
+    if (namespaceName === "tts") {
+      className = "TTSClient";
+    } else if (namespaceName === "empathicVoice") {
+      className = "EmpathicVoiceClient";
+    } else {
+      className = namespaceName.toUpperCase() + "Client";
+    }
 
     // Use uppercase directory names for TTS
     const directoryName = namespaceName === "tts" ? "TTS" : namespaceName;
@@ -246,11 +267,22 @@ export class SwiftRenderer {
     
     public class ${className} {
         
+        ${namespaceName === "empathicVoice" ? `
+        private let options: HumeClient.Options
+        private let networkClient: NetworkClient
+        
+        init(networkClient: NetworkClient, options: HumeClient.Options) {
+            self.networkClient = networkClient
+            self.options = options
+        }
+        
+        public lazy var chat: Chat = { Chat(options: options) }()` : `
         private let networkClient: NetworkClient
         
         init(networkClient: NetworkClient) {
             self.networkClient = networkClient
-        }
+        }`}
+        
         ${resourceNames.map((resourceName) => `public lazy var ${camelCase(resourceName)}: ${resourceName} = { ${resourceName}(networkClient: networkClient) }()`).join("\n")}
     }
 `,
@@ -263,35 +295,45 @@ export class SwiftRenderer {
     methods: SDKMethod[],
     basePath: string,
   ): File {
-    // Generate endpoint extensions
-    const endpointExtensions = methods
-      .map((method) => {
-        const methodName = method.name;
-        const isStreaming =
-          methodName.includes("Streaming") || methodName.includes("Stream");
-        const isDataReturn = method.returnType.type === "Data";
-        const responseType = isDataReturn
-          ? "Data"
-          : this.renderSwiftType(method.returnType);
+    // Group methods by availability
+    const methodsByAvailability = methods.reduce((acc, method) => {
+      if (!acc[method.availability]) {
+        acc[method.availability] = [];
+      }
+      acc[method.availability].push(method);
+      return acc;
+    }, {} as Record<string, SDKMethod[]>);
 
-        // Use the original parameter order for endpoints
-        const stableParameters = method.parameters;
+    // Generate endpoint extensions grouped by availability
+    const endpointExtensions = Object.entries(methodsByAvailability)
+      .map(([availability, methodsGroup]) => {
+        const extensions = methodsGroup.map((method) => {
+          const methodName = method.name;
+          const isStreaming =
+            methodName.includes("Streaming") || methodName.includes("Stream");
+          const isDataReturn = method.returnType.type === "Data";
+          const responseType = isDataReturn
+            ? "Data"
+            : this.renderSwiftType(method.returnType);
 
-        // For streaming methods, use the shorter name without "Streaming" suffix
-        const endpointMethodName = isStreaming
-          ? methodName.replace("Streaming", "Stream")
-          : methodName;
+          // Use the original parameter order for endpoints
+          const stableParameters = method.parameters;
 
-        if (isStreaming) {
-          const endpointParams = [
-            ...stableParameters.map(
-              (p) => `${p.name}: ${this.renderSwiftType(p.type)}`,
-            ),
-            "timeoutDuration: TimeInterval",
-            "maxRetries: Int",
-          ];
+          // For streaming methods, use the shorter name without "Streaming" suffix
+          const endpointMethodName = isStreaming
+            ? methodName.replace("Streaming", "Stream")
+            : methodName;
 
-          return `
+          if (isStreaming) {
+            const endpointParams = [
+              ...stableParameters.map(
+                (p) => `${p.name}: ${this.renderSwiftType(p.type)}`,
+              ),
+              "timeoutDuration: TimeInterval",
+              "maxRetries: Int",
+            ];
+
+            return `
 extension Endpoint where Response == ${responseType} {
   fileprivate static func ${endpointMethodName}(
     ${this.formatParameters(endpointParams)}
@@ -307,16 +349,16 @@ extension Endpoint where Response == ${responseType} {
     )
   }
 }`;
-        } else {
-          const endpointParams = [
-            ...stableParameters.map(
-              (p) => `${p.name}: ${this.renderSwiftType(p.type)}`,
-            ),
-            "timeoutDuration: TimeInterval",
-            "maxRetries: Int",
-          ];
+          } else {
+            const endpointParams = [
+              ...stableParameters.map(
+                (p) => `${p.name}: ${this.renderSwiftType(p.type)}`,
+              ),
+              "timeoutDuration: TimeInterval",
+              "maxRetries: Int",
+            ];
 
-          return `
+            return `
 extension Endpoint where Response == ${responseType} {
   fileprivate static func ${endpointMethodName}(
     ${this.formatParameters(endpointParams)}
@@ -331,7 +373,28 @@ extension Endpoint where Response == ${responseType} {
       maxRetries: maxRetries)
   }
 }`;
-        }
+          }
+        }).join("\n");
+
+        // Wrap all extensions for this availability group
+        return this.wrapWithAvailability(extensions, availability as any);
+      })
+      .join("\n");
+
+    // Group SDK methods by availability  
+    const sdkMethodsByAvailability = methods.reduce((acc, method) => {
+      if (!acc[method.availability]) {
+        acc[method.availability] = [];
+      }
+      acc[method.availability].push(method);
+      return acc;
+    }, {} as Record<string, SDKMethod[]>);
+
+    // Generate SDK methods grouped by availability
+    const sdkMethods = Object.entries(sdkMethodsByAvailability)
+      .map(([availability, methodsGroup]) => {
+        const methodsContent = methodsGroup.map((method) => this.renderSDKMethod(method)).join("\n");
+        return this.wrapWithAvailability(methodsContent, availability as any);
       })
       .join("\n");
 
@@ -350,10 +413,11 @@ extension Endpoint where Response == ${responseType} {
         init(networkClient: NetworkClient) {
             self.networkClient = networkClient
         }
-        ${methods.map((method) => this.renderSDKMethod(method)).join("\n")}
+        ${sdkMethods}
     }
 
-// MARK: - Endpoint Definitions${endpointExtensions}
+// MARK: - Endpoint Definitions
+${endpointExtensions}
 `,
     };
   }
@@ -501,6 +565,8 @@ extension Endpoint where Response == ${responseType} {
         return `[String: ${this.renderSwiftType(type.value)}]`;
       case "void":
         return "Void";
+      case "EmptyResponse":
+        return "EmptyResponse";
       case "Data":
         return "Data";
       case "TODO":
@@ -509,11 +575,13 @@ extension Endpoint where Response == ${responseType} {
   }
 
   private renderSwiftEnum(def: SwiftEnum): string {
-    return `
+    const enumContent = `
     public enum ${def.name}: String, Codable {
       ${def.members.map(([name, value]) => `case ${name} = "${value}"`).join("\n")}
     }
     `;
+    
+    return this.wrapWithAvailability(enumContent, def.availability);
   }
 
   private renderSwiftDiscriminatedUnion(
@@ -572,7 +640,7 @@ extension Endpoint where Response == ${responseType} {
         }
     }`;
 
-    return `
+    const unionContent = `
 public enum ${def.name}: Codable, Hashable {
     ${cases}
     
@@ -581,6 +649,20 @@ public enum ${def.name}: Codable, Hashable {
     }${decoderCode}${encoderCode}
 }
 `;
+    
+    return this.wrapWithAvailability(unionContent, def.availability);
+  }
+
+  /**
+   * Wraps content with conditional compilation directives for server-side only types
+   */
+  private wrapWithAvailability(content: string, availability: Availability): string {
+    if (availability === "serverOnly") {
+      return `#if HUME_SERVER
+${content}
+#endif`;
+    }
+    return content;
   }
 
   private renderSwiftStruct(struct: SwiftStruct) {
@@ -653,9 +735,11 @@ ${initAssignments}${constantAssignments ? "\n" + constantAssignments : ""}
       .filter(Boolean)
       .join("\n");
 
-    return `public struct ${struct.name}: Codable, Hashable {
+    const structContent = `public struct ${struct.name}: Codable, Hashable {
     ${allPropertyLines}${initConstructor}
   }`;
+    
+    return this.wrapWithAvailability(structContent, struct.availability);
   }
 
   private renderSwiftClass(classDef: SwiftClass) {
@@ -666,7 +750,7 @@ ${initAssignments}${constantAssignments ? "\n" + constantAssignments : ""}
       })
       .join("\n");
 
-    return `public class ${classDef.name}: Dictionary<String, Double> {
+    const classContent = `public class ${classDef.name}: Dictionary<String, Double> {
   public override init() {
     super.init()
   }
@@ -690,6 +774,8 @@ ${initAssignments}${constantAssignments ? "\n" + constantAssignments : ""}
   // Named accessors for emotion scores
 ${properties}
 }`;
+    
+    return this.wrapWithAvailability(classContent, classDef.availability);
   }
 
   private renderSwiftDictionaryWithAccessors(
@@ -709,13 +795,13 @@ ${properties}
       properties +
       "\n}";
 
-    return content;
+    return this.wrapWithAvailability(content, dictAccessors.availability);
   }
 
   private renderSwiftCommentedOutDefinition(
     def: SwiftCommentedOutDefinition,
   ): string {
-    return `// TODO: ${def.name} - ${def.reason}
+    const commentContent = `// TODO: ${def.name} - ${def.reason}
 // This type is not yet supported by the Swift SDK generator.
 // 
 // Reason: ${def.reason}
@@ -728,6 +814,8 @@ ${properties}
 // TODO: Implement ${def.name}
 // TODO: Add support for ${def.reason}
 `;
+    
+    return this.wrapWithAvailability(commentContent, def.availability);
   }
 
   private renderSwiftUndiscriminatedUnion(
@@ -771,7 +859,7 @@ ${properties}
       })
       .join(" else ");
 
-    return `import Foundation
+    const unionContent = `import Foundation
 
 public enum ${def.name}: Codable, Hashable {
 ${cases}
@@ -790,6 +878,8 @@ ${cases}
   }
 }
 `;
+    
+    return this.wrapWithAvailability(unionContent, def.availability);
   }
 
   // Helper function to format parameters with one per line when there are multiple

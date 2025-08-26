@@ -9,5 +9,5 @@ bun install
 # Symbolically link the api specs into the expected location
 ln -s $HUME/dev/fern-config/fern/apis apis/
 
-bun generator.ts --target-dir ..
+bun .
 ```

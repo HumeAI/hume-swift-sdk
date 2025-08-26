@@ -2,7 +2,7 @@
 public struct PostedUtterance: Codable, Hashable {
   public let text: String
   public let description: String?
-  public let voice: TtsVoiceRef?
+  public let voice: TTSVoiceRef?
   public let speed: Double?
   public let trailingSilence: Double?
 
@@ -11,7 +11,7 @@ public struct PostedUtterance: Codable, Hashable {
     speed: Double?,
     trailingSilence: Double?,
     text: String,
-    voice: TtsVoiceRef?
+    voice: TTSVoiceRef?
   ) {
     self.description = description
     self.speed = speed

@@ -1079,6 +1079,7 @@ export type AsyncAPISpec = z.infer<typeof AsyncAPISpec>;
 
 export type KnownSpecs = {
   tts: OpenAPISpec;
+  evi: OpenAPISpec; // NEW - EVI OpenAPI spec
   eviAsync: AsyncAPISpec;
 };
 
@@ -1156,7 +1157,7 @@ export const readKnownSpecs = async (
     } catch (e) {
       throw e;
     }
-    // const eviOpenApi: RawOpenAPISpec = eviOpenApiResult.data;
+    const eviOpenApi: RawOpenAPISpec = eviOpenApiResult.data;
 
     const eviAsyncApiOverridesPath =
       baseDir + "/empathic-voice-interface/evi-asyncapi-overrides.yml";
@@ -1182,7 +1183,7 @@ export const readKnownSpecs = async (
 
     // Add schema key
     [
-      // eviOpenApi,
+      eviOpenApi, // UNCOMMENTED - now including EVI OpenAPI
       ttsOpenApi,
       eviAsyncApi,
     ].forEach((x) => {
@@ -1203,6 +1204,7 @@ export const readKnownSpecs = async (
 
     return {
       tts: parseOpenApi(ttsOpenApi),
+      evi: parseOpenApi(eviOpenApi), // NEW - include EVI OpenAPI
       eviAsync: parseAsyncApi(eviAsyncApi),
     };
   } catch (error) {

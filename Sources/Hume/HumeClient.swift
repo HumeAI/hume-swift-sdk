@@ -8,12 +8,8 @@
 import Foundation
 
 public class HumeClient {
-  public enum Options {
-    /// Use an access token with the Hume APIs
-    case accessToken(token: String)
-    /// Use a closure to provide an access token asynchronously
-    case accessTokenProvider(() async throws -> String)
-  }
+  /// Backward compatibility typealias
+  public typealias Options = HumeAuth
 
   private let options: HumeClient.Options
   private let networkClient: NetworkClient
@@ -23,12 +19,12 @@ public class HumeClient {
     let networkingService = NetworkingServiceImpl(
       session: URLNetworkingSession())
     self.networkClient = NetworkClientImpl.makeHumeClient(
-      tokenProvider: { try await options.accessTokenProvider() },
+      options: options,
       networkingService: networkingService)
   }
 
-  public lazy var empathicVoice: EmpathicVoice = {
-    return EmpathicVoice(options: options)
+  public lazy var empathicVoice: EmpathicVoiceClient = {
+    return EmpathicVoiceClient(networkClient: networkClient, options: options)
   }()
 
   public lazy var tts: TTSClient = {
@@ -36,13 +32,3 @@ public class HumeClient {
   }()
 }
 
-extension HumeClient.Options {
-  func accessTokenProvider() async throws -> AuthTokenType {
-    switch self {
-    case .accessToken(let token):
-      return .bearer(token)
-    case .accessTokenProvider(let tokenProvider):
-      return try await .bearer(tokenProvider())
-    }
-  }
-}

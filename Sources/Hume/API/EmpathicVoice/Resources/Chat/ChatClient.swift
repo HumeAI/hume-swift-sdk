@@ -26,10 +26,10 @@ public class Chat: NSObject {
     let host: String = SDKConfiguration.default.host
 
     var components = URLComponents(string: "wss://\(host)/v0/evi/chat")
-    let accessToken = try await AccessTokenResolver.resolve(options: self.options)
-
+    
+    let (queryName, queryValue) = try await options.queryParam()
     components?.queryItems = [
-      URLQueryItem(name: "accessToken", value: accessToken)
+      URLQueryItem(name: queryName, value: queryValue)
     ]
     if let configId = chatConnectOptions?.configId {
       components?.queryItems?.append(URLQueryItem(name: "config_id", value: configId))

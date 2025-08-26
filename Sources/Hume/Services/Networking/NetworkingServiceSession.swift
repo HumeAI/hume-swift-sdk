@@ -17,10 +17,13 @@ protocol NetworkingServiceSession {
     delegate: (any URLSessionTaskDelegate)?
   ) async throws -> (Data, URLResponse)
 
-  func bytes(
-    for request: URLRequest,
-    delegate: (any URLSessionTaskDelegate)?
-  ) async throws -> (URLSession.AsyncBytes, URLResponse)
+  #if os(iOS) || os(macOS)
+    @available(macOS 12.0, *)
+    func bytes(
+      for request: URLRequest,
+      delegate: (any URLSessionTaskDelegate)?
+    ) async throws -> (URLSession.AsyncBytes, URLResponse)
+  #endif
 }
 
 /// `URLNetworkingSession` is the default implementation of `NetworkingServiceSession`. This uses the standard `URLSession` and enables it with a configurable `URLCache`
@@ -42,17 +45,41 @@ struct URLNetworkingSession: NetworkingServiceSession {
     self.session = URLSession(configuration: configuration)
   }
 
-  func data(
-    for request: URLRequest,
-    delegate: (any URLSessionTaskDelegate)? = nil
-  ) async throws -> (Data, URLResponse) {
-    try await session.data(for: request, delegate: delegate)
-  }
+  #if os(iOS) || os(macOS)
+    @available(macOS 12.0, *)
+    func data(
+      for request: URLRequest,
+      delegate: (any URLSessionTaskDelegate)? = nil
+    ) async throws -> (Data, URLResponse) {
+      try await session.data(for: request, delegate: delegate)
+    }
 
-  public func bytes(
-    for request: URLRequest,
-    delegate: (any URLSessionTaskDelegate)? = nil
-  ) async throws -> (URLSession.AsyncBytes, URLResponse) {
-    return try await session.bytes(for: request, delegate: delegate)
-  }
+    @available(macOS 12.0, *)
+    public func bytes(
+      for request: URLRequest,
+      delegate: (any URLSessionTaskDelegate)? = nil
+    ) async throws -> (URLSession.AsyncBytes, URLResponse) {
+      return try await session.bytes(for: request, delegate: delegate)
+    }
+  #else
+    // Fallback for other platforms
+    func data(
+      for request: URLRequest,
+      delegate: (any URLSessionTaskDelegate)? = nil
+    ) async throws -> (Data, URLResponse) {
+      // Use older API for compatibility
+      return try await withCheckedThrowingContinuation { continuation in
+        let task = session.dataTask(with: request) { data, response, error in
+          if let error = error {
+            continuation.resume(throwing: error)
+          } else if let data = data, let response = response {
+            continuation.resume(returning: (data, response))
+          } else {
+            continuation.resume(throwing: URLError(.badServerResponse))
+          }
+        }
+        task.resume()
+      }
+    }
+  #endif
 }
