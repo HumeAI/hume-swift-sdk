@@ -13,22 +13,27 @@ public class HumeClient {
     case accessToken(token: String)
     /// Use a closure to provide an access token asynchronously
     case accessTokenProvider(() async throws -> String)
+    /// Use an API key with the Hume APIs
+    case apiKey(key: String)
   }
 
   private let options: HumeClient.Options
   private let networkClient: NetworkClient
 
   public init(options: Options) {
+    if case .apiKey = options, !Self.isRunningOnServer {
+      fatalError("API key authentication is only supported in server-side environments.")
+    }
     self.options = options
     let networkingService = NetworkingServiceImpl(
       session: URLNetworkingSession())
     self.networkClient = NetworkClientImpl.makeHumeClient(
-      tokenProvider: { try await options.accessTokenProvider() },
+      auth: options.toHumeAuth(),
       networkingService: networkingService)
   }
 
   public lazy var empathicVoice: EmpathicVoice = {
-    return EmpathicVoice(options: options)
+    return EmpathicVoice(auth: options.toHumeAuth())
   }()
 
   public lazy var tts: TTSClient = {
@@ -36,13 +41,25 @@ public class HumeClient {
   }()
 }
 
+extension HumeClient {
+  public static var isRunningOnServer: Bool {
+    #if os(Linux)
+      return true
+    #else
+      return false
+    #endif
+  }
+}
+
 extension HumeClient.Options {
-  func accessTokenProvider() async throws -> AuthTokenType {
+  func toHumeAuth() -> HumeAuth {
     switch self {
     case .accessToken(let token):
-      return .bearer(token)
-    case .accessTokenProvider(let tokenProvider):
-      return try await .bearer(tokenProvider())
+      return .accessToken(token)
+    case .accessTokenProvider(let provider):
+      return .accessTokenProvider(provider)
+    case .apiKey(let key):
+      return .apiKey(key)
     }
   }
 }
