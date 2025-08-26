@@ -1,18 +1,14 @@
 import Foundation
 
 public enum HumeAuth {
-  /// Use an access token with the Hume APIs
   case accessToken(String)
-  /// Use a closure to provide an access token asynchronously
   case accessTokenProvider(() async throws -> String)
   #if HUME_SERVER
-  /// Use an API key with the Hume APIs (server-side only)
   case apiKey(String)
   #endif
 }
 
 extension HumeAuth {
-  /// Returns the appropriate authorization header for HTTP requests
   func authHeader() async throws -> (String, String) {
     switch self {
     case .accessToken(let token):
@@ -26,7 +22,6 @@ extension HumeAuth {
     }
   }
   
-  /// Returns the appropriate query parameter for WebSocket connections
   func queryParam() async throws -> (String, String) {
     switch self {
     case .accessToken(let token):
@@ -38,13 +33,5 @@ extension HumeAuth {
       return ("apiKey", key)
     #endif
     }
-  }
-  
-  /// Returns whether this authentication method is an API key
-  var isApiKey: Bool {
-    #if HUME_SERVER
-    if case .apiKey = self { return true }
-    #endif
-    return false
   }
 }
