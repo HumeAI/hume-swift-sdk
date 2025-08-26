@@ -10,52 +10,66 @@ public enum MicrophoneError: Error {
 
 public typealias MicrophoneDataChunkBlock = (Data, Float) async -> Void
 
-internal final class Microphone: NSObject {
+internal final actor Microphone: NSObject {
   private let micConfig: MicConfig
 
   private var audioEngine: AVAudioEngine
   private var inputNode: AVAudioInputNode!
-  var inputFormat: AVAudioFormat!
   var sinkNode: AVAudioSinkNode!
 
-  private var resampler: Resampler!
+  private var resampler: Resampler?
+  private var isPaused = false
   private let audioBufferProcessor = AudioBufferProcessor()
+  private var lastSourceFormat: AVAudioFormat?
 
   var onChunk: MicrophoneDataChunkBlock = { _, _ in }
   var isMuted: Bool = false
 
   init(
-    audioEngine: AVAudioEngine, sampleRate: Double, sampleSize: Int, audioFormat: AudioFormat? = nil
+    audioEngine: AVAudioEngine, sampleRate: Double, sampleSize: Int,
+    audioFormat: AudioFormat? = nil,
+    onChunk: @escaping MicrophoneDataChunkBlock
   ) throws {
     self.audioEngine = audioEngine
     micConfig = MicConfig(
       sampleRate: sampleRate, sampleSize: sampleSize,
       audioFormat: audioFormat ?? Constants.DefaultAudioFormat,
       channelCount: Constants.InputChannels)
+
+    inputNode = audioEngine.inputNode
+    self.onChunk = onChunk
+
     super.init()
-    try configureInput()
+
+    sinkNode = AVAudioSinkNode(receiverBlock: audioSinkNodeReceiverCallback)
   }
 
   // MARK: - Configuration
 
-  func configureInput() throws {
-    Logger.info("Configuring microphone")
+  /// Configures the resampler. This should be called after attaching and connecting the sink node to the engine
+  func configureResampler() throws {
+    isPaused = true
+    Logger.info("Configuring resampler")
 
     // initialize audio engine and nodes
-    inputNode = audioEngine.inputNode
-    inputFormat = inputNode.outputFormat(forBus: 0)
-    let outputNode = audioEngine.outputNode
+    let inputFormat = inputNode.outputFormat(forBus: 0)
+    guard resamplerSourceFormatChanged(comparedTo: inputFormat) else {
+      Logger.info("Input format unchanged, skipping reconfiguration")
+      return
+    }
 
     // sink node to listen for realtime input
-    sinkNode = AVAudioSinkNode(receiverBlock: audioSinkNodeReceiverCallback)
 
     // configure resampler
     let desiredFormat = try micConfig.avAudioFormat(channelLayout: inputFormat.channelLayout)
     resampler = Resampler(
-      sourceFormat: inputFormat, destinationFormat: desiredFormat,
+      sourceFormat: inputFormat,
+      destinationFormat: desiredFormat,
       sampleSize: AVAudioFrameCount(micConfig.sampleSize))
+    self.lastSourceFormat = inputFormat
 
-    Logger.info("Mic configuration complete")
+    Logger.info("Resampler complete")
+    isPaused = false
   }
 
   // MARK: - Interface
@@ -70,11 +84,20 @@ internal final class Microphone: NSObject {
 
   // MARK: - Private
 
+  private func resamplerSourceFormatChanged(comparedTo fmt: AVAudioFormat) -> Bool {
+    guard let last = lastSourceFormat else { return true }
+    return last.sampleRate != fmt.sampleRate || last.channelCount != fmt.channelCount
+  }
+
   private func audioSinkNodeReceiverCallback(
     timestamp: UnsafePointer<AudioTimeStamp>,
     frameCount: AVAudioFrameCount,
     audioBufferList: UnsafePointer<AudioBufferList>
   ) -> OSStatus {
+    guard let resampler, !isPaused else {
+      Logger.warn("waiting for resampler to be configured")
+      return kAudioComponentErr_NotPermitted
+    }
     do {
       // Resample and convert to PCM Int16
       let outputBuffer = try resampler.resample(

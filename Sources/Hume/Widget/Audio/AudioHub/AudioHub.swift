@@ -66,7 +66,7 @@ public actor AudioHub {
       try audioEngine.prepare()
     }
 
-    Logger.debug(audioEngine.description)
+    Logger.debug("addNode:\n\(audioEngine.description)")
   }
 
   public func detachNode(_ node: AVAudioNode) {
@@ -91,7 +91,7 @@ public actor AudioHub {
     Logger.debug("detaching node: \(node)")
     audioEngine.detach(node)
 
-    Logger.debug(audioEngine.description)
+    Logger.debug("detachNode:\n\(audioEngine.description)")
   }
 
   public func startEngineIfNeeded() throws {
@@ -104,13 +104,13 @@ public actor AudioHub {
       "Session category: \(AVAudioSession.sharedInstance().category.rawValue ?? "unknown")")
     try audioEngine.start()
 
-    Logger.debug(audioEngine.description)
+    Logger.debug("startEngineIfNeeded:\n\(audioEngine.description)")
   }
 
   public func stopEngine() {
     Logger.debug("Stopping audio engine")
     audioEngine.stop()
-    Logger.debug(audioEngine.description)
+    Logger.debug("stopEngine:\n\(audioEngine.description)")
   }
 }
 
@@ -131,7 +131,7 @@ extension AudioHub {
 
     do {
       try await audioSession.configure(with: .inputOutput)
-      try await audioSession.start()
+      //      try await audioSession.start()
     } catch {
       Logger.error("Failed to configure audio session for input/output: \(error)")
       throw AudioHubError.audioSessionConfigError
@@ -148,12 +148,19 @@ extension AudioHub {
       }
     #endif
 
+    Logger.debug("starting audio engine")
+    do {
+      try audioEngine.start()
+    } catch {
+      throw AudioHubError.engineFailed
+    }
     do {
       self.microphone = try Microphone(
         audioEngine: audioEngine,
         sampleRate: Constants.SampleRate,
         sampleSize: Constants.SampleSize,
-        audioFormat: Constants.DefaultAudioFormat)
+        audioFormat: Constants.DefaultAudioFormat,
+        onChunk: handleMicrophoneDataChunk)
     } catch {
       Logger.error("Failed to initialize microphone: \(error.localizedDescription)")
       throw AudioHubError.microphoneUnavailable
@@ -163,21 +170,16 @@ extension AudioHub {
     }
 
     microphoneDataChunkHandler = handler
-    self.microphone?.onChunk = handleMicrophoneDataChunk
 
-    let inputFormat = microphone.inputFormat
-    audioEngine.attach(microphone.sinkNode)
-    audioEngine.connect(inputNode, to: microphone.sinkNode, format: inputFormat)
+    //    let inputFormat = microphone.inputFormat
+    await audioEngine.attach(microphone.sinkNode)
+    await audioEngine.connect(inputNode, to: microphone.sinkNode, format: nil)
 
-    Logger.debug("starting audio engine")
-    do {
-      try audioEngine.start()
-    } catch {
-      throw AudioHubError.engineFailed
-    }
+    try await microphone.configureResampler()
+
     isRecording = true
 
-    Logger.debug(audioEngine.description)
+    Logger.debug("startMicrophone:\n\(audioEngine.description)")
   }
 
   private func toggleVoiceProcessing(
@@ -207,8 +209,6 @@ extension AudioHub {
             enableAdvancedDucking: false, duckingLevel: .default)
       }
     }
-
-    Logger.debug(audioEngine.description)
   }
 
   public func stopMicrophone() async {
@@ -219,7 +219,7 @@ extension AudioHub {
     }
     audioEngine.stop()
     audioEngine.disconnectNodeOutput(inputNode)
-    audioEngine.detach(microphone.sinkNode)
+    await audioEngine.detach(microphone.sinkNode)
     isRecording = false
     //    audioEngine.reset()
 
@@ -253,14 +253,14 @@ extension AudioHub {
     microphoneDataChunkHandler = nil
     self.microphone = nil
 
-    Logger.debug(audioEngine.description)
+    Logger.debug("stopMicrophone:\n\(audioEngine.description)")
   }
 
-  public func muteMic(_ mute: Bool) {
+  public func muteMic(_ mute: Bool) async {
     if mute {
-      microphone?.mute()
+      await microphone?.mute()
     } else {
-      microphone?.unmute()
+      await microphone?.unmute()
     }
   }
 
@@ -286,6 +286,7 @@ extension AudioHub {
 extension AudioHub: AudioSessionDelegate {
   nonisolated func audioSessionRouteDidChange(reason: AVAudioSession.RouteChangeReason) {
     Logger.debug("Audio session route changed: \(reason.rawValue)")
+    Task { try await microphone?.configureResampler() }
   }
 
   nonisolated func audioSessionInterruptionDidBegin() {
@@ -297,7 +298,8 @@ extension AudioHub: AudioSessionDelegate {
   }
 
   nonisolated func audioEngineDidChangeConfiguration() {
-
+    Logger.debug("Audio engine configuration changed")
+    Task { try await microphone?.configureResampler() }
   }
 }
 
