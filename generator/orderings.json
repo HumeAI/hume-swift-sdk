@@ -23,12 +23,12 @@
   "FormatMp3.init": [],
   "PostedTts.init": [
     "context",
-    "format",
     "numGenerations",
     "splitUtterances",
     "stripHeaders",
     "utterances",
-    "instantMode"
+    "instantMode",
+    "format"
   ],
   "ReturnTts.init": [
     "generations",

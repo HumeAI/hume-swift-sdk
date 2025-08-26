@@ -10,19 +10,19 @@ public struct PostedTts: Codable, Hashable {
 
   public init(
     context: PostedTtsContext?,
-    format: Format?,
     numGenerations: Int?,
     splitUtterances: Bool?,
     stripHeaders: Bool?,
     utterances: [PostedUtterance],
-    instantMode: Bool?
+    instantMode: Bool?,
+    format: Format?
   ) {
     self.context = context
-    self.format = format
     self.numGenerations = numGenerations
     self.splitUtterances = splitUtterances
     self.stripHeaders = stripHeaders
     self.utterances = utterances
     self.instantMode = instantMode
+    self.format = format
   }
 }

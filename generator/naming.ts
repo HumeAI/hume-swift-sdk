@@ -142,7 +142,7 @@ const typeRenames: Record<string, Record<string, string>> = {
     tts: "Voice",
   },
   VoiceRef: {
-    tts: "TTSVoiceRef",
+    tts: "TtsVoiceRef",
     empathicVoice: "VoiceRef",
   },
 };
