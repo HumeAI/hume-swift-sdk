@@ -992,8 +992,10 @@ const buildSwiftSdk = (specs: OA.KnownSpecs): SwiftSDK => {
       if (path.startsWith("/v0/tts")) {
         return true
       }
+      // TODO: Re-enable /v0/evi/configs endpoints after authentication refactor is complete
+      // These endpoints are temporarily omitted to reduce diff size during the HumeAuth refactor
       if (path.startsWith("/v0/evi/configs")) {
-        return true
+        return false  // Temporarily disabled
       }
       return false
     });
