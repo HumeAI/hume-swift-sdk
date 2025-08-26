@@ -5,12 +5,12 @@
 //  Created by Chris on 8/22/25.
 //
 
-import Hume
+import Foundation
 
-#if HUME_SERVER
+#if !HUME_SERVER
   public extension HumeClient {
     static var isRunningOnServer: Bool {
-      true
+      false
     }
   }
 #endif
