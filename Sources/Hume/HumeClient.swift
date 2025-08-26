@@ -21,9 +21,6 @@ public class HumeClient {
   private let networkClient: NetworkClient
 
   public init(options: Options) {
-    if case .apiKey = options, !Self.isRunningOnServer {
-      fatalError("API key authentication is only supported in server-side environments.")
-    }
     self.options = options
     let networkingService = NetworkingServiceImpl(
       session: URLNetworkingSession())
@@ -40,6 +37,8 @@ public class HumeClient {
     return TTSClient(networkClient: networkClient)
   }()
 }
+
+
 
 
 
