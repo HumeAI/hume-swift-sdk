@@ -41,15 +41,7 @@ public class HumeClient {
   }()
 }
 
-extension HumeClient {
-  public static var isRunningOnServer: Bool {
-    #if os(Linux)
-      return true
-    #else
-      return false
-    #endif
-  }
-}
+
 
 extension HumeClient.Options {
   func toHumeAuth() -> HumeAuth {
