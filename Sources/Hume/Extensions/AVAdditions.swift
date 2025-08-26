@@ -8,57 +8,55 @@
 
   import AVFoundation
 
-  #if os(iOS)
-    // MARK: - Microphone permissions
-    public enum MicrophonePermission {
-      case undetermined
-      case denied
-      case granted
+  // MARK: - Microphone permissions
+  public enum MicrophonePermission {
+    case undetermined
+    case denied
+    case granted
 
-      public static var current: MicrophonePermission {
-        if #available(iOS 17.0, *) {
-          return AVAudioApplication.shared.recordPermission.asMicrophonePermission
-        } else {
-          return AVAudioSession.sharedInstance().recordPermission.asMicrophonePermission
-        }
+    public static var current: MicrophonePermission {
+      if #available(iOS 17.0, *) {
+        return AVAudioApplication.shared.recordPermission.asMicrophonePermission
+      } else {
+        return AVAudioSession.sharedInstance().recordPermission.asMicrophonePermission
       }
+    }
 
-      public static func requestPermissions() async -> Bool {
-        if #available(iOS 17.0, *) {
-          return await AVAudioApplication.requestRecordPermission()
-        } else {
-          return await withCheckedContinuation { cont in
-            AVAudioSession.sharedInstance().requestRecordPermission { granted in
-              cont.resume(with: .success(granted))
-            }
+    public static func requestPermissions() async -> Bool {
+      if #available(iOS 17.0, *) {
+        return await AVAudioApplication.requestRecordPermission()
+      } else {
+        return await withCheckedContinuation { cont in
+          AVAudioSession.sharedInstance().requestRecordPermission { granted in
+            cont.resume(with: .success(granted))
           }
         }
       }
     }
+  }
 
-    @available(iOS 17.0, *)
-    extension AVAudioApplication.recordPermission {
-      var asMicrophonePermission: MicrophonePermission {
-        switch self {
-        case .undetermined: return .undetermined
-        case .denied: return .denied
-        case .granted: return .granted
-        default: return .undetermined
-        }
+  @available(iOS 17.0, *)
+  extension AVAudioApplication.recordPermission {
+    var asMicrophonePermission: MicrophonePermission {
+      switch self {
+      case .undetermined: return .undetermined
+      case .denied: return .denied
+      case .granted: return .granted
+      default: return .undetermined
       }
     }
+  }
 
-    extension AVAudioSession.RecordPermission {
-      var asMicrophonePermission: MicrophonePermission {
-        switch self {
-        case .undetermined: return .undetermined
-        case .denied: return .denied
-        case .granted: return .granted
-        default: return .undetermined
-        }
+  extension AVAudioSession.RecordPermission {
+    var asMicrophonePermission: MicrophonePermission {
+      switch self {
+      case .undetermined: return .undetermined
+      case .denied: return .denied
+      case .granted: return .granted
+      default: return .undetermined
       }
     }
-  #endif
+  }
 
   // MARK: - Pretty printing
   // Protocol declaration
@@ -155,7 +153,8 @@
       description += "\nConnections:\n"
       for node in attachedNodes {
         for point in outputConnectionPoints(for: node, outputBus: 0) {
-          description += "From: \(describeNode(node)) -> To: \(describeConnectionPoint(point))\n"
+          description +=
+            "From: \(describeNode(node)) -> To: \(describeConnectionPoint(point))\n"
         }
       }
 
@@ -168,7 +167,8 @@
       var nodeDescription = "\(type(of: node)): "
 
       if let format = node.outputFormat(forBus: 0) as AVAudioFormat? {
-        nodeDescription += "[Channels: \(format.channelCount), SampleRate: \(format.sampleRate)]"
+        nodeDescription +=
+          "[Channels: \(format.channelCount), SampleRate: \(format.sampleRate)]"
       } else {
         nodeDescription += "No Output"
       }
@@ -179,7 +179,8 @@
     private func describeConnectionPoint(_ point: AVAudioConnectionPoint) -> String {
       guard let node = point.node else { return "Unknown Node" }
       guard point.bus < node.numberOfOutputs else {
-        return "\(type(of: node)) [Invalid bus: \(point.bus), Max: \(node.numberOfOutputs - 1)]"
+        return
+          "\(type(of: node)) [Invalid bus: \(point.bus), Max: \(node.numberOfOutputs - 1)]"
       }
       let format = node.outputFormat(forBus: point.bus)
       return

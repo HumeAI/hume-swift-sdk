@@ -7,24 +7,11 @@ protocol NetworkClient: AnyObject {
   /// - Throws: A `NetworkError` if the request fails or authentication is missing.
   /// - Returns: A decoded response of type `Response`.
   func send<Response: NetworkClientResponse>(
-    _ endpoint: Endpoint<Response>, customTokenProvider: TokenProvider?
+    _ endpoint: Endpoint<Response>
   ) async throws -> Response
   func stream<Response: NetworkClientResponse>(
-    _ endpoint: Endpoint<Response>, customTokenProvider: TokenProvider?
+    _ endpoint: Endpoint<Response>
   ) -> AsyncThrowingStream<Response, Error>
-}
-
-extension NetworkClient {
-  func send<Response: NetworkClientResponse>(_ endpoint: Endpoint<Response>) async throws
-    -> Response
-  {
-    try await self.send(endpoint, customTokenProvider: nil)
-  }
-  func stream<Response: NetworkClientResponse>(_ endpoint: Endpoint<Response>)
-    -> AsyncThrowingStream<Response, Error>
-  {
-    self.stream(endpoint, customTokenProvider: nil)
-  }
 }
 
 enum NetworkClientNotification {
@@ -43,10 +30,9 @@ class NetworkClientImpl: NetworkClient {
   }
 
   func send<Response: NetworkClientResponse>(
-    _ endpoint: Endpoint<Response>, customTokenProvider: TokenProvider? = nil
+    _ endpoint: Endpoint<Response>
   ) async throws -> Response {
-    var requestBuilder = try await makeRequestBuilder(
-      endpoint, customTokenProvider: customTokenProvider)
+    var requestBuilder = try await makeRequestBuilder(endpoint)
     requestBuilder = requestBuilder.setBody(endpoint.body)
     requestBuilder = requestBuilder.setTimeout(endpoint.timeoutDuration)
     let request = try requestBuilder.build()
@@ -84,14 +70,13 @@ class NetworkClientImpl: NetworkClient {
   }
 
   func stream<Response: NetworkClientResponse>(
-    _ endpoint: Endpoint<Response>, customTokenProvider: TokenProvider? = nil
+    _ endpoint: Endpoint<Response>
   ) -> AsyncThrowingStream<Response, Error> {
     return AsyncThrowingStream { continuation in
       Task {
         do {
           // Build URLRequest
-          var builder = try await makeRequestBuilder(
-            endpoint, customTokenProvider: customTokenProvider)
+          var builder = try await makeRequestBuilder(endpoint)
           builder = builder.setBody(endpoint.body)
           builder = builder.setTimeout(endpoint.timeoutDuration)
           let request = try builder.build()
@@ -141,7 +126,7 @@ class NetworkClientImpl: NetworkClient {
   }
 
   private func makeRequestBuilder<Response: NetworkClientResponse>(
-    _ endpoint: Endpoint<Response>, customTokenProvider: TokenProvider? = nil
+    _ endpoint: Endpoint<Response>
   ) async throws -> RequestBuilder {
     var requestBuilder = RequestBuilder(baseURL: baseURL)
       .setPath(endpoint.path)
@@ -150,13 +135,8 @@ class NetworkClientImpl: NetworkClient {
       .setCachePolicy(endpoint.cachePolicy)
       .addHeader(key: "Content-Type", value: "application/json")
 
-    if let customTokenProvider {
-      // For backward compatibility with custom token providers
-      requestBuilder = try await customTokenProvider().updateRequest(requestBuilder)
-    } else {
-      // Use the streamlined HumeAuth approach
-      requestBuilder = try await auth.authenticate(requestBuilder)
-    }
+    // Use the streamlined HumeAuth approach
+    requestBuilder = try await auth.authenticate(requestBuilder)
 
     if let headers = endpoint.headers {
       for (key, value) in headers {
