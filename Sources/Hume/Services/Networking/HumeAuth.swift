@@ -1,10 +1,3 @@
-//
-//  HumeAuth.swift
-//  Hume
-//
-//  Created by Claude Code on 8/26/25.
-//
-
 import Foundation
 
 public enum HumeAuth {
