@@ -1,4 +1,4 @@
-#if HUME_WIDGET
+#if HUME_IOS
   //
   //  VoiceProviderState.swift
   //  Hume

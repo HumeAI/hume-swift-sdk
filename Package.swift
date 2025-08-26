@@ -29,7 +29,7 @@ let package = Package(
     .target(
       name: "Hume",
       swiftSettings: [
-        .define("HUME_WIDGET", .when(platforms: [.iOS]))
+        .define("HUME_IOS", .when(platforms: [.iOS]))
       ]),
     .testTarget(
       name: "HumeTests",

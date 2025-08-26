@@ -13,7 +13,7 @@ enum Constants {
   static var SampleSize: Int = { Int(Self.SampleRate * Self.InputBufferDuration) }()
   static let InputBufferDuration = 0.02
 
-  #if HUME_WIDGET
+  #if HUME_IOS
     static let DefaultAudioFormat = AudioFormat.PCM_16BIT
   #endif
   static let MinimumBufferSize = 128

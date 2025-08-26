@@ -7,7 +7,7 @@
 
 import AVFoundation
 
-#if HUME_WIDGET
+#if HUME_IOS
   // MARK: - Microphone permissions
   public enum MicrophonePermission {
     case undetermined

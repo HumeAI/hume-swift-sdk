@@ -1,4 +1,4 @@
-#if HUME_WIDGET
+#if HUME_IOS
   //
   //  AudioSessionIO.swift
   //  Hume
