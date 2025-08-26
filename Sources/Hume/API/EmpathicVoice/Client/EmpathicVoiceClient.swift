@@ -2,14 +2,14 @@ import Foundation
 
 public class EmpathicVoiceClient {
   //  private let networkClient: NetworkClient
-  private let options: HumeClient.Options
+  private let auth: HumeAuth
 
-  init(networkClient: NetworkClient, options: HumeClient.Options) {
+  init(networkClient: NetworkClient, options: HumeAuth) {
     // self.networkClient = networkClient
-    self.options = options
+    self.auth = options
   }
 
-  public lazy var chat: Chat = { Chat(options: options) }()
+  public lazy var chat: Chat = { Chat(options: auth) }()
 
   // public lazy var configs: Configs = { Configs(networkClient: networkClient) }()
 }

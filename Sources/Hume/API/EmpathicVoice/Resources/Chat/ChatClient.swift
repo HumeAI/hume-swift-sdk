@@ -6,10 +6,10 @@ public class Chat: NSObject {
   private var onClose: ((Int, String?) -> Void)? = nil
   private var onError: ((Error, URLResponse?) -> Void)? = nil
 
-  private let options: HumeClient.Options
+  private let auth: HumeAuth
 
-  init(options: HumeClient.Options) {
-    self.options = options
+  init(options: HumeAuth) {
+    self.auth = options
   }
 
   public func connect(
@@ -29,7 +29,7 @@ public class Chat: NSObject {
 
     // Add authentication to URLComponents
     if var urlComponents = components {
-      try await options.authenticate(&urlComponents)
+      try await auth.authenticate(&urlComponents)
       components = urlComponents
     }
     if let configId = chatConnectOptions?.configId {
