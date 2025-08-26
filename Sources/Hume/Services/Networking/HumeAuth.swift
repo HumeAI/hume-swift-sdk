@@ -4,7 +4,7 @@ public enum HumeAuth {
   case accessToken(String)
   case accessTokenProvider(() async throws -> String)
   #if HUME_SERVER
-  case apiKey(String)
+    case apiKey(String)
   #endif
 }
 
@@ -17,12 +17,12 @@ extension HumeAuth {
     case .accessTokenProvider(let provider):
       return requestBuilder.addHeader(key: "Authorization", value: "Bearer \(try await provider())")
     #if HUME_SERVER
-    case .apiKey(let key):
-      return requestBuilder.addHeader(key: "X-API-Key", value: key)
+      case .apiKey(let key):
+        return requestBuilder.addHeader(key: "X-API-Key", value: key)
     #endif
     }
   }
-  
+
   /// Adds authentication to URLComponents for WebSocket connections
   func authenticate(_ components: inout URLComponents) async throws {
     switch self {
@@ -31,12 +31,12 @@ extension HumeAuth {
     case .accessTokenProvider(let provider):
       addQueryItem(&components, name: "accessToken", value: try await provider())
     #if HUME_SERVER
-    case .apiKey(let key):
-      addQueryItem(&components, name: "apiKey", value: key)
+      case .apiKey(let key):
+        addQueryItem(&components, name: "apiKey", value: key)
     #endif
     }
   }
-  
+
   private func addQueryItem(_ components: inout URLComponents, name: String, value: String) {
     if components.queryItems == nil {
       components.queryItems = []

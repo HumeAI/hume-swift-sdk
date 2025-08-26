@@ -119,8 +119,6 @@ class NetworkClientImpl: NetworkClient {
       }
     }
   }
-  
-
 
   private func isRetryableError(_ error: Error) -> Bool {
     // Add logic to determine if an error is retryable

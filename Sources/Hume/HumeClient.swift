@@ -31,4 +31,3 @@ public class HumeClient {
     return TTSClient(networkClient: networkClient)
   }()
 }
-

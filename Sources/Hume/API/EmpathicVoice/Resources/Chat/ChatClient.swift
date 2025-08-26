@@ -26,7 +26,7 @@ public class Chat: NSObject {
     let host: String = SDKConfiguration.default.host
 
     var components = URLComponents(string: "wss://\(host)/v0/evi/chat")
-    
+
     // Add authentication to URLComponents
     if var urlComponents = components {
       try await options.authenticate(&urlComponents)

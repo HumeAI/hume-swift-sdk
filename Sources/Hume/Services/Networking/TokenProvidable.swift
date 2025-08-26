@@ -8,7 +8,7 @@ typealias TokenProvider = () async throws -> AuthTokenType
 enum AuthTokenType {
   case bearer(String)
   #if HUME_SERVER
-  case apiKey(String)
+    case apiKey(String)
   #endif
 
   func updateRequest(_ requestBuilder: RequestBuilder) async throws -> RequestBuilder {
@@ -18,10 +18,10 @@ enum AuthTokenType {
         requestBuilder
         .addHeader(key: "Authorization", value: "Bearer \(token)")
     #if HUME_SERVER
-    case .apiKey(let key):
-      return
-        requestBuilder
-        .addHeader(key: "X-API-Key", value: key)
+      case .apiKey(let key):
+        return
+          requestBuilder
+          .addHeader(key: "X-API-Key", value: key)
     #endif
     }
   }
