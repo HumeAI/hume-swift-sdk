@@ -8,9 +8,9 @@
 import Hume
 
 #if HUME_SERVER
-
   extension HumeClient {
-    static var isRunningOnServer: Bool { true }
-
+    public static var isRunningOnServer: Bool {
+      true
+    }
   }
 #endif
