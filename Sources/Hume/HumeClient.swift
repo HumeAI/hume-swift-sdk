@@ -38,10 +38,6 @@ public class HumeClient {
   }()
 }
 
-
-
-
-
 extension HumeClient.Options {
   func toHumeAuth() -> HumeAuth {
     switch self {

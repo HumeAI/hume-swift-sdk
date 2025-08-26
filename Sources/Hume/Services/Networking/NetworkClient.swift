@@ -6,7 +6,8 @@ protocol NetworkClient: AnyObject {
   /// - Parameter endpoint: The endpoint to send the request to.
   /// - Throws: A `NetworkError` if the request fails or authentication is missing.
   /// - Returns: A decoded response of type `Response`.
-  func send<Response: NetworkClientResponse>(_ endpoint: Endpoint<Response>) async throws -> Response
+  func send<Response: NetworkClientResponse>(_ endpoint: Endpoint<Response>) async throws
+    -> Response
   func stream<Response: NetworkClientResponse>(
     _ endpoint: Endpoint<Response>
   ) -> AsyncThrowingStream<Response, Error>

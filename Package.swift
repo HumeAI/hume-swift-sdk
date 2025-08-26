@@ -18,7 +18,7 @@ let package = Package(
       name: "HumeTestingUtils",
       targets: ["HumeTestingUtils"]
     ),
-    
+
   ],
   targets: [
     // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -35,6 +35,6 @@ let package = Package(
       name: "HumeTestingUtils",
       dependencies: ["Hume"]
     ),
-    
+
   ]
 )
