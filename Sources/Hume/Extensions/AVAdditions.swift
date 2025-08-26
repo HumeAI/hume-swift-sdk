@@ -7,55 +7,57 @@
 
 import AVFoundation
 
-// MARK: - Microphone permissions
-public enum MicrophonePermission {
-  case undetermined
-  case denied
-  case granted
+#if HUME_WIDGET
+  // MARK: - Microphone permissions
+  public enum MicrophonePermission {
+    case undetermined
+    case denied
+    case granted
 
-  public static var current: MicrophonePermission {
-    if #available(iOS 17.0, *) {
-      return AVAudioApplication.shared.recordPermission.asMicrophonePermission
-    } else {
-      return AVAudioSession.sharedInstance().recordPermission.asMicrophonePermission
+    public static var current: MicrophonePermission {
+      if #available(iOS 17.0, *) {
+        return AVAudioApplication.shared.recordPermission.asMicrophonePermission
+      } else {
+        return AVAudioSession.sharedInstance().recordPermission.asMicrophonePermission
+      }
     }
-  }
 
-  public static func requestPermissions() async -> Bool {
-    if #available(iOS 17.0, *) {
-      return await AVAudioApplication.requestRecordPermission()
-    } else {
-      return await withCheckedContinuation { cont in
-        AVAudioSession.sharedInstance().requestRecordPermission { granted in
-          cont.resume(with: .success(granted))
+    public static func requestPermissions() async -> Bool {
+      if #available(iOS 17.0, *) {
+        return await AVAudioApplication.requestRecordPermission()
+      } else {
+        return await withCheckedContinuation { cont in
+          AVAudioSession.sharedInstance().requestRecordPermission { granted in
+            cont.resume(with: .success(granted))
+          }
         }
       }
     }
   }
-}
 
-@available(iOS 17.0, *)
-extension AVAudioApplication.recordPermission {
-  var asMicrophonePermission: MicrophonePermission {
-    switch self {
-    case .undetermined: return .undetermined
-    case .denied: return .denied
-    case .granted: return .granted
-    default: return .undetermined
+  @available(iOS 17.0, *)
+  extension AVAudioApplication.recordPermission {
+    var asMicrophonePermission: MicrophonePermission {
+      switch self {
+      case .undetermined: return .undetermined
+      case .denied: return .denied
+      case .granted: return .granted
+      default: return .undetermined
+      }
     }
   }
-}
 
-extension AVAudioSession.RecordPermission {
-  var asMicrophonePermission: MicrophonePermission {
-    switch self {
-    case .undetermined: return .undetermined
-    case .denied: return .denied
-    case .granted: return .granted
-    default: return .undetermined
+  extension AVAudioSession.RecordPermission {
+    var asMicrophonePermission: MicrophonePermission {
+      switch self {
+      case .undetermined: return .undetermined
+      case .denied: return .denied
+      case .granted: return .granted
+      default: return .undetermined
+      }
     }
   }
-}
+#endif
 
 // MARK: - Pretty printing
 // Protocol declaration

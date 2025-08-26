@@ -22,6 +22,7 @@ extension Data {
   }
 }
 
+#if HUME_WIDGET
 // MARK: - Audio Extensions
 extension Data {
   func parseWAVHeader() -> WAVHeader? {
@@ -58,3 +59,4 @@ extension Data {
     return nil
   }
 }
+#endif
