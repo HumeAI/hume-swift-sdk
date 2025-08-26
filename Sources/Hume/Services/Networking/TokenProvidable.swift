@@ -1,16 +1,9 @@
 import Foundation
 
+// MARK: - Backward compatibility types for custom token providers
+// These are kept for backward compatibility with NetworkClient.send(customTokenProvider:)
+
 typealias TokenProvider = () async throws -> AuthTokenType
-
-protocol TokenProvidable: AnyObject {
-  /// Fetches a token asynchronously
-  func fetchToken() async throws -> AuthTokenType
-}
-
-enum TokenProviderError: Error {
-  case unconfigured
-  case invalidToken
-}
 
 enum AuthTokenType {
   case bearer(String)
