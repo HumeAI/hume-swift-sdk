@@ -6,177 +6,177 @@
 //
 
 #if HUME_SERVER
-import XCTest
+  import XCTest
 
-@testable import Hume
-@testable import HumeServer
+  @testable import Hume
+  @testable import HumeServer
 
-final class TTSTest: XCTestCase {
+  final class TTSTest: XCTestCase {
 
-  var client: HumeClient!
+    var client: HumeClient!
 
-  override func setUp() {
-    // Get API key from environment variable
-    if let apiKey = ProcessInfo.processInfo.environment["HUME_API_KEY"] {
-      // Use API key for server-side testing
-      self.client = HumeClient(options: .apiKey(key: apiKey))
-    } else {
-      self.client = nil
-    }
-  }
-
-  func test_synthesizeJson_basicRequest() async throws {
-    // Skip test if no API key is available
-    guard let client = self.client else {
-      throw XCTSkip("HUME_API_KEY environment variable not set")
+    override func setUp() {
+      // Get API key from environment variable
+      if let apiKey = ProcessInfo.processInfo.environment["HUME_API_KEY"] {
+        // Use API key for server-side testing
+        self.client = HumeClient(options: .apiKey(key: apiKey))
+      } else {
+        self.client = nil
+      }
     }
 
-    // Create a basic TTS request
-    let request = PostedTts(
-      context: .postedContextWithUtterances(
-        PostedContextWithUtterances(
-          utterances: [
-            PostedUtterance(
-              description: "Test utterance",
-              speed: 1.0,
-              trailingSilence: 0.5,
-              text: "Hello, this is a test of the TTS API.",
-              voice: .postedUtteranceVoiceWithName(
-                PostedUtteranceVoiceWithName(
-                  name: "test-voice",
-                  provider: .humeAi
+    func test_synthesizeJson_basicRequest() async throws {
+      // Skip test if no API key is available
+      guard let client = self.client else {
+        throw XCTSkip("HUME_API_KEY environment variable not set")
+      }
+
+      // Create a basic TTS request
+      let request = PostedTts(
+        context: .postedContextWithUtterances(
+          PostedContextWithUtterances(
+            utterances: [
+              PostedUtterance(
+                description: "Test utterance",
+                speed: 1.0,
+                trailingSilence: 0.5,
+                text: "Hello, this is a test of the TTS API.",
+                voice: .postedUtteranceVoiceWithName(
+                  PostedUtteranceVoiceWithName(
+                    name: "test-voice",
+                    provider: .humeAi
+                  )
                 )
               )
-            )
-          ]
-        )
-      ),
-    
-      numGenerations: 1,
-      splitUtterances: false,
-      stripHeaders: false,
-      utterances: [
-        PostedUtterance(
-          description: "Test utterance",
-          speed: 1.0,
-          trailingSilence: 0.5,
-          text: "Hello, this is a test of the TTS API.",
-          voice: .postedUtteranceVoiceWithName(
-            PostedUtteranceVoiceWithName(
-              name: "test-voice",
-              provider: .humeAi
-            )
+            ]
           )
-        )
-      ],
-      instantMode: false,
-      format: Format.mp3(FormatMp3())
-    )
+        ),
 
-    // Call the synthesizeJson method
-    let result = try await client.tts.tts.synthesizeJson(request: request)
-
-    // Verify the response structure
-    XCTAssertNotNil(result)
-    XCTAssertNotNil(result.generations)
-    XCTAssertNotNil(result.requestId)
-
-    let generations = result.generations
-    XCTAssertFalse(generations.isEmpty)
-
-    let firstGeneration = generations[0]
-    XCTAssertNotNil(firstGeneration.generationId)
-    XCTAssertNotNil(firstGeneration.audio)
-    XCTAssertNotNil(firstGeneration.encoding)
-    XCTAssertNotNil(firstGeneration.snippets)
-  }
-
-  func test_synthesizeJson_errorHandling() async throws {
-    // Skip test if no API key is available
-    guard let client = self.client else {
-      throw XCTSkip("HUME_API_KEY environment variable not set")
-    }
-
-    // Create an invalid request (missing required fields)
-    let invalidRequest = PostedTts(
-      context: .postedContextWithUtterances(
-        PostedContextWithUtterances(
-          utterances: []
-        )
-      ),
-      numGenerations: 1,
-      splitUtterances: false,
-      stripHeaders: false,
-      utterances: [],
-      instantMode: false,
-      format: Format.mp3(FormatMp3())
-    )
-
-    // This should throw an error due to empty utterances
-    do {
-      let _ = try await client.tts.tts.synthesizeJson(request: invalidRequest)
-      XCTFail("Expected error for invalid request")
-    } catch {
-      // Expected to fail
-      XCTAssertTrue(error is Error)
-    }
-  }
-
-  func test_apiKeyAuthentication() async throws {
-    // Skip test if no API key is available
-    guard let client = self.client else {
-      throw XCTSkip("HUME_API_KEY environment variable not set")
-    }
-
-    // Verify that the client was initialized with API key authentication
-    // This test ensures that the API key option is working correctly
-    XCTAssertNotNil(client)
-
-    // Test a simple TTS request to verify API key authentication works
-    let request = PostedTts(
-      context: .postedContextWithUtterances(
-        PostedContextWithUtterances(
-          utterances: [
-            PostedUtterance(
-              description: "API Key test",
-              speed: 1.0,
-              trailingSilence: 0.5,
-              text: "Testing API key authentication.",
-              voice: .postedUtteranceVoiceWithName(
-                PostedUtteranceVoiceWithName(
-                  name: "test-voice",
-                  provider: .humeAi
-                )
+        numGenerations: 1,
+        splitUtterances: false,
+        stripHeaders: false,
+        utterances: [
+          PostedUtterance(
+            description: "Test utterance",
+            speed: 1.0,
+            trailingSilence: 0.5,
+            text: "Hello, this is a test of the TTS API.",
+            voice: .postedUtteranceVoiceWithName(
+              PostedUtteranceVoiceWithName(
+                name: "test-voice",
+                provider: .humeAi
               )
             )
-          ]
-        )
-      ),
-      numGenerations: 1,
-      splitUtterances: false,
-      stripHeaders: false,
-      utterances: [
-        PostedUtterance(
-          description: "API Key test",
-          speed: 1.0,
-          trailingSilence: 0.5,
-          text: "Testing API key authentication.",
-          voice: .postedUtteranceVoiceWithName(
-            PostedUtteranceVoiceWithName(
-              name: "test-voice",
-              provider: .humeAi
+          )
+        ],
+        instantMode: false,
+        format: Format.mp3(FormatMp3())
+      )
+
+      // Call the synthesizeJson method
+      let result = try await client.tts.tts.synthesizeJson(request: request)
+
+      // Verify the response structure
+      XCTAssertNotNil(result)
+      XCTAssertNotNil(result.generations)
+      XCTAssertNotNil(result.requestId)
+
+      let generations = result.generations
+      XCTAssertFalse(generations.isEmpty)
+
+      let firstGeneration = generations[0]
+      XCTAssertNotNil(firstGeneration.generationId)
+      XCTAssertNotNil(firstGeneration.audio)
+      XCTAssertNotNil(firstGeneration.encoding)
+      XCTAssertNotNil(firstGeneration.snippets)
+    }
+
+    func test_synthesizeJson_errorHandling() async throws {
+      // Skip test if no API key is available
+      guard let client = self.client else {
+        throw XCTSkip("HUME_API_KEY environment variable not set")
+      }
+
+      // Create an invalid request (missing required fields)
+      let invalidRequest = PostedTts(
+        context: .postedContextWithUtterances(
+          PostedContextWithUtterances(
+            utterances: []
+          )
+        ),
+        numGenerations: 1,
+        splitUtterances: false,
+        stripHeaders: false,
+        utterances: [],
+        instantMode: false,
+        format: Format.mp3(FormatMp3())
+      )
+
+      // This should throw an error due to empty utterances
+      do {
+        let _ = try await client.tts.tts.synthesizeJson(request: invalidRequest)
+        XCTFail("Expected error for invalid request")
+      } catch {
+        // Expected to fail
+        XCTAssertTrue(error is Error)
+      }
+    }
+
+    func test_apiKeyAuthentication() async throws {
+      // Skip test if no API key is available
+      guard let client = self.client else {
+        throw XCTSkip("HUME_API_KEY environment variable not set")
+      }
+
+      // Verify that the client was initialized with API key authentication
+      // This test ensures that the API key option is working correctly
+      XCTAssertNotNil(client)
+
+      // Test a simple TTS request to verify API key authentication works
+      let request = PostedTts(
+        context: .postedContextWithUtterances(
+          PostedContextWithUtterances(
+            utterances: [
+              PostedUtterance(
+                description: "API Key test",
+                speed: 1.0,
+                trailingSilence: 0.5,
+                text: "Testing API key authentication.",
+                voice: .postedUtteranceVoiceWithName(
+                  PostedUtteranceVoiceWithName(
+                    name: "test-voice",
+                    provider: .humeAi
+                  )
+                )
+              )
+            ]
+          )
+        ),
+        numGenerations: 1,
+        splitUtterances: false,
+        stripHeaders: false,
+        utterances: [
+          PostedUtterance(
+            description: "API Key test",
+            speed: 1.0,
+            trailingSilence: 0.5,
+            text: "Testing API key authentication.",
+            voice: .postedUtteranceVoiceWithName(
+              PostedUtteranceVoiceWithName(
+                name: "test-voice",
+                provider: .humeAi
+              )
             )
           )
-        )
-      ],
-      instantMode: false,
-      format: Format.mp3(FormatMp3())
-    )
+        ],
+        instantMode: false,
+        format: Format.mp3(FormatMp3())
+      )
 
-    // This should work with API key authentication
-    let result = try await client.tts.tts.synthesizeJson(request: request)
-    XCTAssertNotNil(result)
+      // This should work with API key authentication
+      let result = try await client.tts.tts.synthesizeJson(request: request)
+      XCTAssertNotNil(result)
+    }
   }
-}
 
 #endif
