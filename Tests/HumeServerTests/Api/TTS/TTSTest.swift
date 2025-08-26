@@ -55,7 +55,7 @@ final class TTSTest: XCTestCase {
           ]
         )
       ),
-      format: Format.mp3(FormatMp3()),
+    
       numGenerations: 1,
       splitUtterances: false,
       stripHeaders: false,
@@ -73,7 +73,8 @@ final class TTSTest: XCTestCase {
           )
         )
       ],
-      instantMode: false
+      instantMode: false,
+      format: Format.mp3(FormatMp3())
     )
 
     // Call the synthesizeJson method
@@ -107,12 +108,12 @@ final class TTSTest: XCTestCase {
           utterances: []
         )
       ),
-      format: Format.mp3(FormatMp3()),
       numGenerations: 1,
       splitUtterances: false,
       stripHeaders: false,
       utterances: [],
-      instantMode: false
+      instantMode: false,
+      format: Format.mp3(FormatMp3())
     )
 
     // This should throw an error due to empty utterances
