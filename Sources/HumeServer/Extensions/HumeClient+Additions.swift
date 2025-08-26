@@ -8,8 +8,8 @@
 import Hume
 
 #if HUME_SERVER
-  public extension HumeClient {
-    static var isRunningOnServer: Bool {
+  extension HumeClient {
+    public static var isRunningOnServer: Bool {
       true
     }
   }
