@@ -229,18 +229,20 @@ export class SwiftRenderer {
     namespaceName: string,
     resourceNames: string[],
     basePath: string,
+    targetModule: "Hume" | "HumeServer" = "Hume",
   ): File {
     // Capitalize the namespace name for the class name
     const className = namespaceName.toUpperCase() + "Client";
 
-    // Use uppercase directory names for TTS
-    const directoryName = namespaceName === "tts" ? "TTS" : namespaceName;
+    // Use uppercase directory names for TTS and proper-case for EmpathicVoice
+    const directoryName = namespaceName === "tts" ? "TTS" : "EmpathicVoice";
     
     // Debug logging
     console.log(`Namespace client: namespaceName="${namespaceName}", directoryName="${directoryName}"`);
 
+    const targetRoot = targetModule === "Hume" ? "Hume" : "HumeServer";
     return {
-      path: `${basePath}/Sources/Hume/API/${directoryName}/Client/${directoryName}Client.swift`,
+      path: `${basePath}/Sources/${targetRoot}/API/${directoryName}/Client/${directoryName}Client.swift`,
       content: `
     import Foundation
     
@@ -262,6 +264,7 @@ export class SwiftRenderer {
     resourceName: string,
     methods: SDKMethod[],
     basePath: string,
+    targetModule: "Hume" | "HumeServer" = "Hume",
   ): File {
     // Generate endpoint extensions
     const endpointExtensions = methods
@@ -335,11 +338,12 @@ extension Endpoint where Response == ${responseType} {
       })
       .join("\n");
 
-    // Use uppercase directory names for TTS
-    const directoryName = namespaceName === "tts" ? "TTS" : namespaceName;
+    // Use uppercase directory names for TTS and proper-case for EmpathicVoice
+    const directoryName = namespaceName === "tts" ? "TTS" : "EmpathicVoice";
+    const targetRoot = targetModule === "Hume" ? "Hume" : "HumeServer";
 
     return {
-      path: `${basePath}/Sources/Hume/API/${directoryName}/Resources/${resourceName}/${resourceName}.swift`,
+      path: `${basePath}/Sources/${targetRoot}/API/${directoryName}/Resources/${resourceName}/${resourceName}.swift`,
       content: `
     import Foundation
     
@@ -362,10 +366,12 @@ extension Endpoint where Response == ${responseType} {
     namespaceName: string,
     def: SwiftDefinition,
     basePath: string,
+    targetModule: "Hume" | "HumeServer" = "Hume",
   ): File {
-    // Use uppercase directory names for TTS
-    const directoryName = namespaceName === "tts" ? "TTS" : namespaceName;
-    const path = `${basePath}/Sources/Hume/API/${directoryName}/Models/${def.name}.swift`;
+    // Use uppercase directory names for TTS and proper-case for EmpathicVoice
+    const directoryName = namespaceName === "tts" ? "TTS" : "EmpathicVoice";
+    const targetRoot = targetModule === "Hume" ? "Hume" : "HumeServer";
+    const path = `${basePath}/Sources/${targetRoot}/API/${directoryName}/Models/${def.name}.swift`;
     if (def.type === "enum") {
       return {
         path,
@@ -416,6 +422,27 @@ extension Endpoint where Response == ${responseType} {
       };
     }
     throw new Error(`Unhandled Swift definition type: ${(def as any).type}`);
+  }
+
+  public renderServerHumeClientExtension(
+    namespaceName: string,
+    resourceName: string,
+    basePath: string,
+  ): File {
+    return {
+      path: `${basePath}/Sources/HumeServer/Extensions/HumeClient+${resourceName}.swift`,
+      content: `
+import Hume
+
+#if HUME_SERVER
+extension HumeClient {
+  public var ${camelCase(resourceName)}: ${resourceName} {
+    return ${resourceName}(networkClient: self.serverNetworkClient)
+  }
+}
+#endif
+`,
+    };
   }
 
   public async swiftFormat(input: string): Promise<string> {

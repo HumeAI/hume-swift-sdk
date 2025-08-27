@@ -6,14 +6,26 @@
     "@types/bun": "latest"
   },
   "peerDependencies": {
-    "typescript": "^5.0.0"
+    "typescript": "^5.9.2"
   },
   "dependencies": {
     "@types/lodash": "^4.17.15",
+    "@types/node": "^24.3.0",
     "change-case": "^5.4.4",
     "lodash": "^4.17.21",
     "prettier": "^3.4.2",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.20.5",
     "yaml": "^2.7.0",
     "zod": "^3.24.1"
-  }
+  },
+  "version": "1.0.0",
+  "description": "```bash # Enter this `generator/` directory from the repo root cd generator",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }

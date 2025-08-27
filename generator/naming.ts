@@ -115,10 +115,10 @@ export const getResourceName = ({ operation, path }: Endpoint) => {
   if (operation.kind === "ignored") {
     throw new Error();
   }
-  if (operation["x-fern-sdk-group-name"])
-    // x-fern-sdk-group name is the name of the property that defines the "resource" that the operation belongs to
+  if (operation["x-fern-sdk-group-name"]) // x-fern-sdk-group name is the name of the property that defines the "resource" that the operation belongs to
     return normalizeResourceName(operation["x-fern-sdk-group-name"]);
   if (path.startsWith("/v0/tts")) return "TTS";
+  if (path.startsWith("/v0/evi/configs")) return "Configs";
   throw new Error(`Unable to determine SDK group of operation ${path}`);
 };
 

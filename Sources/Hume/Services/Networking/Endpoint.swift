@@ -17,7 +17,7 @@ import Foundation
 /// ```
 ///
 /// - Parameter Response: The expected response type conforming to `Decodable`.
-struct Endpoint<Response: NetworkClientResponse> {
+public struct Endpoint<Response: NetworkClientResponse> {
   /// The URL path of the endpoint relative to the base URL.
   let path: String
 
@@ -51,7 +51,7 @@ struct Endpoint<Response: NetworkClientResponse> {
   ///   - cachePolicy: The cache policy to use for the request. Defaults to `.useProtocolCachePolicy`.
   ///   - timeoutDuration: The timeout duration in seconds. Defaults to 60 seconds.
   ///   - maxRetries: The maximum number of retry attempts. Defaults to 0 (no retries).
-  init(
+  public init(
     path: String,
     method: HTTPMethod = .get,
     headers: [String: String]? = nil,

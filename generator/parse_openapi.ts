@@ -522,7 +522,6 @@ const decorateJsonSchema_ = (
     addSchemaKind(schema, "empty");
     return;
   }
-
   
   if ("additionalProperties" in schema && !schema.additionalProperties) {
     delete schema.additionalProperties;
@@ -1079,6 +1078,7 @@ export type AsyncAPISpec = z.infer<typeof AsyncAPISpec>;
 
 export type KnownSpecs = {
   tts: OpenAPISpec;
+  eviOpenApi: OpenAPISpec;
   eviAsync: AsyncAPISpec;
 };
 
@@ -1156,16 +1156,10 @@ export const readKnownSpecs = async (
     } catch (e) {
       throw e;
     }
-    // const eviOpenApi: RawOpenAPISpec = eviOpenApiResult.data;
+    const eviOpenApi: RawOpenAPISpec = eviOpenApiResult.data;
 
-    const eviAsyncApiOverridesPath =
-      baseDir + "/empathic-voice-interface/evi-asyncapi-overrides.yml";
     const eviAsyncApiPath =
       baseDir + "/empathic-voice-interface/evi-asyncapi.json";
-
-    const eviAsyncApiOverrides = yaml.parse(
-      (await fs.readFile(eviAsyncApiOverridesPath)).toString(),
-    );
 
     const eviAsyncApiRaw = JSON.parse(await fs.readFile(eviAsyncApiPath, 'utf8'))
 
@@ -1203,6 +1197,7 @@ export const readKnownSpecs = async (
 
     return {
       tts: parseOpenApi(ttsOpenApi),
+      eviOpenApi: parseOpenApi(eviOpenApi),
       eviAsync: parseAsyncApi(eviAsyncApi),
     };
   } catch (error) {
