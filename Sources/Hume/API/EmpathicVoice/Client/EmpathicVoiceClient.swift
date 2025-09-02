@@ -9,12 +9,12 @@ import Foundation
 
 public class EmpathicVoice {
 
-  private let options: HumeClient.Options
+  private let auth: HumeAuth
 
-  init(options: HumeClient.Options) {
-    self.options = options
+  init(auth: HumeAuth) {
+    self.auth = auth
   }
 
-  public lazy var chat: Chat = { Chat(options: options) }()
+  public lazy var chat: Chat = { Chat(auth: auth) }()
 
 }

@@ -6,10 +6,10 @@ public class Chat: NSObject {
   private var onClose: ((Int, String?) -> Void)? = nil
   private var onError: ((Error, URLResponse?) -> Void)? = nil
 
-  private let options: HumeClient.Options
+  private let auth: HumeAuth
 
-  init(options: HumeClient.Options) {
-    self.options = options
+  init(auth: HumeAuth) {
+    self.auth = auth
   }
 
   public func connect(
@@ -25,34 +25,31 @@ public class Chat: NSObject {
 
     let host: String = SDKConfiguration.default.host
 
-    var components = URLComponents(string: "wss://\(host)/v0/evi/chat")
-    let accessToken = try await AccessTokenResolver.resolve(options: self.options)
+    var components = URLComponents(string: "wss://\(host)/v0/evi/chat")!
+    try await self.auth.authenticate(&components)
 
-    components?.queryItems = [
-      URLQueryItem(name: "accessToken", value: accessToken)
-    ]
     if let configId = chatConnectOptions?.configId {
-      components?.queryItems?.append(URLQueryItem(name: "config_id", value: configId))
+      components.queryItems?.append(URLQueryItem(name: "config_id", value: configId))
     }
     if let configVersion = chatConnectOptions?.configVersion {
-      components?.queryItems?.append(URLQueryItem(name: "config_version", value: configVersion))
+      components.queryItems?.append(URLQueryItem(name: "config_version", value: configVersion))
     }
     if let resumedChatGroupId = chatConnectOptions?.resumedChatGroupId {
-      components?.queryItems?.append(
+      components.queryItems?.append(
         URLQueryItem(name: "resumed_chat_group_id", value: resumedChatGroupId))
     }
     if let voiceId = chatConnectOptions?.voiceId {
-      components?.queryItems?.append(URLQueryItem(name: "voice_id", value: voiceId))
+      components.queryItems?.append(URLQueryItem(name: "voice_id", value: voiceId))
     }
     if let verboseTranscription = chatConnectOptions?.verboseTranscription {
-      components?.queryItems?.append(
+      components.queryItems?.append(
         URLQueryItem(name: "verbose_transcription", value: String(verboseTranscription)))
     }
     if let eventLimit = chatConnectOptions?.eventLimit {
-      components?.queryItems?.append(URLQueryItem(name: "event_limit", value: String(eventLimit)))
+      components.queryItems?.append(URLQueryItem(name: "event_limit", value: String(eventLimit)))
     }
 
-    let url = components!.url!
+    let url = components.url!
 
     var request = URLRequest(url: url)
 

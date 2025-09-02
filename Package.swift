@@ -18,10 +18,7 @@ let package = Package(
       name: "HumeTestingUtils",
       targets: ["HumeTestingUtils"]
     ),
-    .library(
-      name: "HumeServer",
-      targets: ["HumeServer"]
-    ),
+
   ],
   targets: [
     // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -38,12 +35,6 @@ let package = Package(
       name: "HumeTestingUtils",
       dependencies: ["Hume"]
     ),
-    .target(
-      name: "HumeServer",
-      dependencies: ["Hume"],
-      swiftSettings: [
-        .define("HUME_SERVER", .when(platforms: [.macOS, .linux]))
-      ]
-    ),
+
   ]
 )

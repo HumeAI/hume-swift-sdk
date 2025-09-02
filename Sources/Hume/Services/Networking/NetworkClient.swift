@@ -6,25 +6,11 @@ protocol NetworkClient: AnyObject {
   /// - Parameter endpoint: The endpoint to send the request to.
   /// - Throws: A `NetworkError` if the request fails or authentication is missing.
   /// - Returns: A decoded response of type `Response`.
-  func send<Response: NetworkClientResponse>(
-    _ endpoint: Endpoint<Response>, customTokenProvider: TokenProvider?
-  ) async throws -> Response
-  func stream<Response: NetworkClientResponse>(
-    _ endpoint: Endpoint<Response>, customTokenProvider: TokenProvider?
-  ) -> AsyncThrowingStream<Response, Error>
-}
-
-extension NetworkClient {
   func send<Response: NetworkClientResponse>(_ endpoint: Endpoint<Response>) async throws
     -> Response
-  {
-    try await self.send(endpoint, customTokenProvider: nil)
-  }
-  func stream<Response: NetworkClientResponse>(_ endpoint: Endpoint<Response>)
-    -> AsyncThrowingStream<Response, Error>
-  {
-    self.stream(endpoint, customTokenProvider: nil)
-  }
+  func stream<Response: NetworkClientResponse>(
+    _ endpoint: Endpoint<Response>
+  ) -> AsyncThrowingStream<Response, Error>
 }
 
 enum NetworkClientNotification {
@@ -33,20 +19,19 @@ enum NetworkClientNotification {
 
 class NetworkClientImpl: NetworkClient {
   private let baseURL: URL
-  private let tokenProvider: TokenProvider
+  private let auth: HumeAuth
   private let networkingService: NetworkingService
 
-  init(baseURL: URL, tokenProvider: @escaping TokenProvider, networkingService: NetworkingService) {
+  init(baseURL: URL, auth: HumeAuth, networkingService: NetworkingService) {
     self.baseURL = baseURL
-    self.tokenProvider = tokenProvider
+    self.auth = auth
     self.networkingService = networkingService
   }
 
   func send<Response: NetworkClientResponse>(
-    _ endpoint: Endpoint<Response>, customTokenProvider: TokenProvider? = nil
+    _ endpoint: Endpoint<Response>
   ) async throws -> Response {
-    var requestBuilder = try await makeRequestBuilder(
-      endpoint, customTokenProvider: customTokenProvider)
+    var requestBuilder = try await makeRequestBuilder(endpoint)
     requestBuilder = requestBuilder.setBody(endpoint.body)
     requestBuilder = requestBuilder.setTimeout(endpoint.timeoutDuration)
     let request = try requestBuilder.build()
@@ -84,14 +69,13 @@ class NetworkClientImpl: NetworkClient {
   }
 
   func stream<Response: NetworkClientResponse>(
-    _ endpoint: Endpoint<Response>, customTokenProvider: TokenProvider? = nil
+    _ endpoint: Endpoint<Response>
   ) -> AsyncThrowingStream<Response, Error> {
     return AsyncThrowingStream { continuation in
       Task {
         do {
           // Build URLRequest
-          var builder = try await makeRequestBuilder(
-            endpoint, customTokenProvider: customTokenProvider)
+          var builder = try await makeRequestBuilder(endpoint)
           builder = builder.setBody(endpoint.body)
           builder = builder.setTimeout(endpoint.timeoutDuration)
           let request = try builder.build()
@@ -141,7 +125,7 @@ class NetworkClientImpl: NetworkClient {
   }
 
   private func makeRequestBuilder<Response: NetworkClientResponse>(
-    _ endpoint: Endpoint<Response>, customTokenProvider: TokenProvider? = nil
+    _ endpoint: Endpoint<Response>
   ) async throws -> RequestBuilder {
     var requestBuilder = RequestBuilder(baseURL: baseURL)
       .setPath(endpoint.path)
@@ -150,11 +134,7 @@ class NetworkClientImpl: NetworkClient {
       .setCachePolicy(endpoint.cachePolicy)
       .addHeader(key: "Content-Type", value: "application/json")
 
-    if let customTokenProvider {
-      requestBuilder = try await customTokenProvider().updateRequest(requestBuilder)
-    } else {
-      requestBuilder = try await tokenProvider().updateRequest(requestBuilder)
-    }
+    requestBuilder = try await auth.authenticate(requestBuilder)
 
     if let headers = endpoint.headers {
       for (key, value) in headers {
@@ -169,13 +149,13 @@ class NetworkClientImpl: NetworkClient {
 
 extension NetworkClientImpl {
   static func makeHumeClient(
-    tokenProvider: @escaping TokenProvider,
+    auth: HumeAuth,
     networkingService: NetworkingService
   ) -> NetworkClientImpl {
     let host: String = SDKConfiguration.default.host
     let baseURL = URL(string: "https://\(host)")!
     return .init(
-      baseURL: baseURL, tokenProvider: tokenProvider, networkingService: networkingService)
+      baseURL: baseURL, auth: auth, networkingService: networkingService)
   }
 }
 
