@@ -203,9 +203,8 @@
     }
 
     public func muteOutput(_ mute: Bool) async {
-      if let soundPlayer = _soundPlayer {
-        await soundPlayer.setVolume(mute ? 0.0 : 1.0)
-      }
+      guard let _soundPlayer else { return }
+      await _soundPlayer.setVolume(mute ? 0.0 : 1.0)
     }
 
     public func sendUserInput(message: String) async throws {
