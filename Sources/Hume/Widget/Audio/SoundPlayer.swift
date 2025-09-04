@@ -15,6 +15,14 @@
       rawAudioPlayer.meteredSourceNode.sourceNode
     }
 
+    public var volume: Float {
+      audioSourceNode.volume
+    }
+
+    public func setVolume(_ volume: Float) {
+      audioSourceNode.volume = volume
+    }
+
     // MARK: - Private properties
     private var rawAudioPlayer: RawAudioPlayer
 

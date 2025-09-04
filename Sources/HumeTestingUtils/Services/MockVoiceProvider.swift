@@ -64,6 +64,10 @@
 
     }
 
+    public func muteOutput(_ mute: Bool) async {
+      // Mock implementation - no actual audio to mute
+    }
+
     // MARK: - Event Simulation
     private func startSimulatingEvents() {
       mockEventsTask = Task.detached(priority: .userInitiated) {

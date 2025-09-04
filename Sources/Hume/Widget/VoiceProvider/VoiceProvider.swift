@@ -202,6 +202,11 @@
       Task { await audioHub.muteMic(mute) }
     }
 
+    public func muteOutput(_ mute: Bool) async {
+      guard let _soundPlayer else { return }
+      await _soundPlayer.setVolume(mute ? 0.0 : 1.0)
+    }
+
     public func sendUserInput(message: String) async throws {
       try await socket?.sendTextInput(text: message)
     }
