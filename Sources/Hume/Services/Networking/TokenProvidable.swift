@@ -1,6 +1,6 @@
 import Foundation
 
-public typealias TokenProvider = () async throws -> AuthTokenType
+typealias TokenProvider = () async throws -> AuthTokenType
 
 protocol TokenProvidable: AnyObject {
   /// Fetches a token asynchronously
@@ -12,7 +12,7 @@ enum TokenProviderError: Error {
   case invalidToken
 }
 
-public enum AuthTokenType {
+enum AuthTokenType {
   case bearer(String)
 
   func updateRequest(_ requestBuilder: RequestBuilder) async throws -> RequestBuilder {

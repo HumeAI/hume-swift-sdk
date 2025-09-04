@@ -36,9 +36,6 @@ public class HumeClient {
   public lazy var tts: TTSClient = {
     return TTSClient(networkClient: networkClient)
   }()
-
-  // Expose the NetworkClient for server-only modules
-  public var serverNetworkClient: NetworkClient { networkClient }
 }
 
 extension HumeClient.Options {

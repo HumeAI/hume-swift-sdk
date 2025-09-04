@@ -1,30 +1,16 @@
 import Foundation
 
-public protocol NetworkClient: AnyObject {
+protocol NetworkClient: AnyObject {
   /// Sends a request using the provided endpoint and returns the decoded response.
   ///
   /// - Parameter endpoint: The endpoint to send the request to.
   /// - Throws: A `NetworkError` if the request fails or authentication is missing.
   /// - Returns: A decoded response of type `Response`.
-  func send<Response: NetworkClientResponse>(
-    _ endpoint: Endpoint<Response>, customTokenProvider: TokenProvider?
-  ) async throws -> Response
-  func stream<Response: NetworkClientResponse>(
-    _ endpoint: Endpoint<Response>, customTokenProvider: TokenProvider?
-  ) -> AsyncThrowingStream<Response, Error>
-}
-
-extension NetworkClient {
-  public func send<Response: NetworkClientResponse>(_ endpoint: Endpoint<Response>) async throws
+  func send<Response: NetworkClientResponse>(_ endpoint: Endpoint<Response>) async throws
     -> Response
-  {
-    try await self.send(endpoint, customTokenProvider: nil)
-  }
-  public func stream<Response: NetworkClientResponse>(_ endpoint: Endpoint<Response>)
-    -> AsyncThrowingStream<Response, Error>
-  {
-    self.stream(endpoint, customTokenProvider: nil)
-  }
+  func stream<Response: NetworkClientResponse>(
+    _ endpoint: Endpoint<Response>
+  ) -> AsyncThrowingStream<Response, Error>
 }
 
 enum NetworkClientNotification {
@@ -46,46 +32,6 @@ class NetworkClientImpl: NetworkClient {
     _ endpoint: Endpoint<Response>
   ) async throws -> Response {
     var requestBuilder = try await makeRequestBuilder(endpoint)
-    requestBuilder = requestBuilder.setBody(endpoint.body)
-    requestBuilder = requestBuilder.setTimeout(endpoint.timeoutDuration)
-    let request = try requestBuilder.build()
-
-    var lastError: Error?
-    var retryCount = 0
-
-    repeat {
-      do {
-        return try await networkingService.performRequest(request)
-      } catch {
-        lastError = error
-        retryCount += 1
-
-        // Only retry if we haven't exceeded maxRetries and it's a retryable error
-        if retryCount <= endpoint.maxRetries && isRetryableError(error) {
-          // Exponential backoff: wait 2^retryCount seconds before retrying
-          Logger.warn("retry #\(retryCount) - \(request.url?.absoluteString ?? "unknown URL")")
-          try await Task.sleep(nanoseconds: UInt64(pow(2.0, Double(retryCount)) * 1_000_000_000))
-          continue
-        }
-
-        // notify listeners of error
-        DispatchQueue.main.async {
-          NotificationCenter.default.post(
-            Notification(
-              name: NetworkClientNotification.DidReceiveNetworkError, userInfo: ["error": error]))
-        }
-        throw error
-      }
-    } while retryCount <= endpoint.maxRetries
-
-    // This should never be reached, but just in case
-    throw lastError ?? NetworkError.unknown
-  }
-
-  func send<Response: NetworkClientResponse>(
-    _ endpoint: Endpoint<Response>, customTokenProvider: TokenProvider?
-  ) async throws -> Response {
-    var requestBuilder = try await makeRequestBuilder(endpoint, customTokenProvider: customTokenProvider)
     requestBuilder = requestBuilder.setBody(endpoint.body)
     requestBuilder = requestBuilder.setTimeout(endpoint.timeoutDuration)
     let request = try requestBuilder.build()
@@ -158,42 +104,6 @@ class NetworkClientImpl: NetworkClient {
     }
   }
 
-  func stream<Response: NetworkClientResponse>(
-    _ endpoint: Endpoint<Response>, customTokenProvider: TokenProvider?
-  ) -> AsyncThrowingStream<Response, Error> {
-    return AsyncThrowingStream { continuation in
-      Task {
-        do {
-          // Build URLRequest
-          var builder = try await makeRequestBuilder(endpoint, customTokenProvider: customTokenProvider)
-          builder = builder.setBody(endpoint.body)
-          builder = builder.setTimeout(endpoint.timeoutDuration)
-          let request = try builder.build()
-
-          var buffer = Data()
-
-          for try await chunk in networkingService.streamData(for: request) {
-            if Response.self == Data.self {
-              continuation.yield(chunk as! Response)
-            } else {
-              buffer.append(chunk)
-              while let range = buffer.range(of: Data([UInt8(ascii: "\n")])) {
-                let jsonData = buffer.subdata(in: 0..<range.lowerBound)
-                buffer.removeSubrange(0...range.lowerBound)
-                let decoded = try Defaults.decoder.decode(Response.self, from: jsonData)
-                continuation.yield(decoded)
-              }
-            }
-          }
-          continuation.finish()
-        } catch {
-          Logger.error("error streaming", error)
-          continuation.finish(throwing: error)
-        }
-      }
-    }
-  }
-
   private func isRetryableError(_ error: Error) -> Bool {
     // Add logic to determine if an error is retryable
     // For example, network timeouts, server errors (5xx), etc.
@@ -233,32 +143,6 @@ class NetworkClientImpl: NetworkClient {
     }
     return requestBuilder
   }
-
-  private func makeRequestBuilder<Response: NetworkClientResponse>(
-    _ endpoint: Endpoint<Response>, customTokenProvider: TokenProvider?
-  ) async throws -> RequestBuilder {
-    var requestBuilder = RequestBuilder(baseURL: baseURL)
-      .setPath(endpoint.path)
-      .setMethod(endpoint.method)
-      .setQueryParams(endpoint.queryParams ?? [:])
-      .setCachePolicy(endpoint.cachePolicy)
-      .addHeader(key: "Content-Type", value: "application/json")
-
-    // Use custom token provider if provided, otherwise use the default auth
-    if let customTokenProvider = customTokenProvider {
-      let authToken = try await customTokenProvider()
-      requestBuilder = try await authToken.updateRequest(requestBuilder)
-    } else {
-      requestBuilder = try await auth.authenticate(requestBuilder)
-    }
-
-    if let headers = endpoint.headers {
-      for (key, value) in headers {
-        requestBuilder = requestBuilder.addHeader(key: key, value: value)
-      }
-    }
-    return requestBuilder
-  }
 }
 
 // MARK: - Client Factory
@@ -277,7 +161,7 @@ extension NetworkClientImpl {
 
 // MARK: - Common models
 
-public typealias NetworkClientResponse = Decodable & Hashable
-public typealias NetworkClientRequest = Encodable & Hashable
+typealias NetworkClientResponse = Decodable & Hashable
+typealias NetworkClientRequest = Encodable & Hashable
 
-public struct EmptyResponse: NetworkClientResponse {}
+struct EmptyResponse: NetworkClientResponse {}
