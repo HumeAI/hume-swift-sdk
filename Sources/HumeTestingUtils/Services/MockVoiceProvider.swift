@@ -63,7 +63,7 @@
     public func mute(_ mute: Bool) {
 
     }
-    
+
     public func muteOutput(_ mute: Bool) async {
       // Mock implementation - no actual audio to mute
     }

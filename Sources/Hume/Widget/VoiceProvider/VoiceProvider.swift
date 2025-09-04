@@ -201,7 +201,7 @@
     public func mute(_ mute: Bool) {
       Task { await audioHub.muteMic(mute) }
     }
-    
+
     public func muteOutput(_ mute: Bool) async {
       if let soundPlayer = _soundPlayer {
         await soundPlayer.setVolume(mute ? 0.0 : 1.0)

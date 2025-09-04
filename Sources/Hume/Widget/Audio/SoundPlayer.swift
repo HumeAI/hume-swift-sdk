@@ -14,11 +14,11 @@
     public var audioSourceNode: AVAudioSourceNode {
       rawAudioPlayer.meteredSourceNode.sourceNode
     }
-    
+
     public var volume: Float {
-      get { audioSourceNode.volume }
+      audioSourceNode.volume
     }
-    
+
     public func setVolume(_ volume: Float) {
       audioSourceNode.volume = volume
     }

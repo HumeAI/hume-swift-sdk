@@ -26,7 +26,7 @@
     /// Mutes or unmutes the microphone.
     /// - Parameter mute: Pass `true` to mute, `false` to unmute.
     func mute(_ mute: Bool)
-    
+
     /// Mutes or unmutes the output audio (sound player).
     /// - Parameter mute: Pass `true` to mute, `false` to unmute.
     func muteOutput(_ mute: Bool) async
