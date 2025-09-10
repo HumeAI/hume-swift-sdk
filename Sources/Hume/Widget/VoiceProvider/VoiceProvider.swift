@@ -3,6 +3,9 @@
   import Combine
   import Foundation
 
+  /// VoiceProvider is responsible for managing a voice-based chat session with EVI. It handles coordinating
+  /// the microphone input, sending audio data to EVI, receiving audio output, and playing it back.
+  /// There should only be one instance of VoiceProvider; acquire an instance from `VoiceProviderFactory`.
   public class VoiceProvider: VoiceProvidable {
     public var state: AnyPublisher<VoiceProviderState, Never> {
       stateSubject.eraseToAnyPublisher()
@@ -39,7 +42,12 @@
 
     // MARK: Init/deinit
 
+    @available(*, deprecated, message: "Use VoiceProviderFactory to fetch a single instance")
     public init(client: HumeClient) {
+      self.humeClient = client
+    }
+
+    internal init(with client: HumeClient) {
       self.humeClient = client
     }
 
@@ -57,6 +65,11 @@
       with options: ChatConnectOptions?,
       sessionSettings: SessionSettings
     ) async throws {
+      assert(stateSubject.value != .connected, "Already connected, please disconnect first")
+      assert(
+        stateSubject.value != .connecting,
+        "Already connecting, wait for connection to finish or disconnect first")
+
       Logger.info(
         "Connecting voice provider. options: \(String(describing: options))"
       )
