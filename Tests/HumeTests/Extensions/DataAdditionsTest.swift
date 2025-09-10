@@ -22,26 +22,30 @@ struct DataAdditionsTest {
       }
       func putUInt16(_ v: UInt16, at offset: Int) {
         let le = withUnsafeBytes(of: v.littleEndian) { Array($0) }
-        bytes[offset] = le[0]; bytes[offset + 1] = le[1]
+        bytes[offset] = le[0]
+        bytes[offset + 1] = le[1]
       }
       func putUInt32(_ v: UInt32, at offset: Int) {
         let le = withUnsafeBytes(of: v.littleEndian) { Array($0) }
-        bytes[offset] = le[0]; bytes[offset + 1] = le[1]; bytes[offset + 2] = le[2]; bytes[offset + 3] = le[3]
+        bytes[offset] = le[0]
+        bytes[offset + 1] = le[1]
+        bytes[offset + 2] = le[2]
+        bytes[offset + 3] = le[3]
       }
 
       // RIFF header
       putString("RIFF", at: 0)
-      putUInt32(36, at: 4) // chunk size (unused by parser)
+      putUInt32(36, at: 4)  // chunk size (unused by parser)
       putString("WAVE", at: 8)
       // fmt subchunk
       putString("fmt ", at: 12)
-      putUInt32(16, at: 16) // subchunk1 size (PCM)
-      putUInt16(1, at: 20) // audioFormat = PCM
-      putUInt16(2, at: 22) // numChannels = 2
-      putUInt32(48000, at: 24) // sampleRate
-      putUInt32(48000 * 2 * 16 / 8, at: 28) // byteRate = sampleRate * channels * blitsPerSample/8
-      putUInt16(2 * 16 / 8, at: 32) // blockAlign = channels * bitsPerSample/8
-      putUInt16(16, at: 34) // bitsPerSample
+      putUInt32(16, at: 16)  // subchunk1 size (PCM)
+      putUInt16(1, at: 20)  // audioFormat = PCM
+      putUInt16(2, at: 22)  // numChannels = 2
+      putUInt32(48000, at: 24)  // sampleRate
+      putUInt32(48000 * 2 * 16 / 8, at: 28)  // byteRate = sampleRate * channels * blitsPerSample/8
+      putUInt16(2 * 16 / 8, at: 32)  // blockAlign = channels * bitsPerSample/8
+      putUInt16(16, at: 34)  // bitsPerSample
       // data subchunk header (not read by parser but include to make header realistic)
       putString("data", at: 36)
       putUInt32(0, at: 40)

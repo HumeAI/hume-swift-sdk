@@ -20,7 +20,8 @@ struct AVAdditionsTest {
 
     @Test func avAudioApplication_recordPermission_maps_to_MicrophonePermission() async throws {
       if #available(iOS 17.0, *) {
-        #expect(AVAudioApplication.recordPermission.undetermined.asMicrophonePermission == .undetermined)
+        #expect(
+          AVAudioApplication.recordPermission.undetermined.asMicrophonePermission == .undetermined)
         #expect(AVAudioApplication.recordPermission.denied.asMicrophonePermission == .denied)
         #expect(AVAudioApplication.recordPermission.granted.asMicrophonePermission == .granted)
       } else {

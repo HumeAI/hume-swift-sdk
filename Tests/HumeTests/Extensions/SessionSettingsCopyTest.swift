@@ -17,7 +17,9 @@ struct SessionSettingsCopyTest {
       customSessionId: "sid",
       languageModelApiKey: "lm-key",
       systemPrompt: "sys",
-      tools: [Tool(description: nil, fallbackContent: nil, name: "t1", parameters: "{}", type: .builtin)],
+      tools: [
+        Tool(description: nil, fallbackContent: nil, name: "t1", parameters: "{}", type: .builtin)
+      ],
       variables: ["k": "v"]
     )
   }
@@ -47,7 +49,11 @@ struct SessionSettingsCopyTest {
     let newAudio = AudioConfiguration(channels: 2, encoding: .linear16, sampleRate: 44100)
     let newBuiltinTools = [BuiltinToolConfig(fallbackContent: "fb", name: .webSearch)]
     let newContext = Context(text: "newctx", type: .persistent)
-    let newTools = [Tool(description: "d", fallbackContent: "fc", name: "t2", parameters: "{\"x\":1}", type: .builtin)]
+    let newTools = [
+      Tool(
+        description: "d", fallbackContent: "fc", name: "t2", parameters: "{\"x\":1}", type: .builtin
+      )
+    ]
     let newVars = ["a": "b"]
 
     // Act
