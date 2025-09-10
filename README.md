@@ -48,7 +48,7 @@ import Hume
 let token = try await myAccessTokenClient.fetchAccessToken()
 humeClient = HumeClient(options: .accessToken(token: token))
 
-let voiceProvider = VoiceProvider(client: humeClient)
+let voiceProvider = VoiceProviderFactory.getVoiceProvider(client: humeClient)
 voiceProvider.delegate = myDelegate
 
 // Request permission to record audio. Be sure to add `Privacy - Microphone Usage Description`

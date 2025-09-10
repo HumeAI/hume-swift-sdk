@@ -33,7 +33,10 @@ let package = Package(
       dependencies: ["Hume"]),
     .target(
       name: "HumeTestingUtils",
-      dependencies: ["Hume"]
+      dependencies: ["Hume"],
+      swiftSettings: [
+        .define("HUME_IOS", .when(platforms: [.iOS]))
+      ]
     ),
 
   ]
