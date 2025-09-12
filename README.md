@@ -30,6 +30,10 @@ API reference documentation is available [here](https://dev.hume.ai/reference/).
     ]
 ```
 
+### Testing 
+
+We recommend testing on a physical device, audio I/O behavior may vary on the simulator.
+
 ## Usage
 
 ### Voice Chat
