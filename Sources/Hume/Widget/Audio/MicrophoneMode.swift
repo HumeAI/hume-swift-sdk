@@ -36,4 +36,18 @@
       }
     }
   }
+
+  extension MicrophoneMode {
+    /// Show's the system microphone mode picker UI. Evaluate `preferredMode` to determine if this should be called
+    public func showMicrophoneModeSystemUserInterface() {
+      AVCaptureDevice.showSystemUserInterface(.microphoneModes)
+    }
+
+    /// Shows the system microphone mode picker UI if Voice Isolation is not already selected
+    public func showMicrophoneModeSystemUserInterfaceIfNeeded() {
+      if preferredMode != .voiceIsolation {
+        showMicrophoneModeSystemUserInterface()
+      }
+    }
+  }
 #endif
