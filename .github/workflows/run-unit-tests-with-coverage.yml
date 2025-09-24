@@ -1,0 +1,88 @@
+name: Run Tests with Coverage
+
+on:
+  pull_request:
+    types: ["opened", "reopened", "ready_for_review", "synchronize"]
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  test-and-coverage:
+    runs-on: macos-15
+    env:
+      COVERAGE_HTML_DIR: coverage-html
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show toolchain info
+        run: |
+          swift --version
+
+      - name: Build & Test (SwiftPM, with coverage)
+        run: |
+          set -eo pipefail
+          swift build --configuration debug
+          swift test --parallel --enable-code-coverage
+
+      - name: Generate coverage summary and HTML
+        run: |
+          set -eo pipefail
+          BIN_PATH=$(swift build --show-bin-path)
+          PROF_DATA="${BIN_PATH}/codecov/default.profdata"
+
+          # Fallback: merge any .profraw into default.profdata if needed
+          if [[ ! -f "${PROF_DATA}" ]]; then
+            mkdir -p "${BIN_PATH}/codecov"
+            RAWS=$(find "${BIN_PATH}/codecov" -name "*.profraw" -print || true)
+            if [[ -n "$RAWS" ]]; then
+              xcrun llvm-profdata merge -sparse $RAWS -o "${BIN_PATH}/codecov/default.profdata"
+            fi
+          fi
+
+          if [[ ! -f "${PROF_DATA}" ]]; then
+            echo "Coverage profile not found at ${PROF_DATA}" >&2
+            exit 1
+          fi
+
+          # Collect test binaries (.xctest bundles)
+          TEST_BINS=()
+          while IFS= read -r b; do
+            name=$(basename "$b" .xctest)
+            TEST_BINS+=("$b/Contents/MacOS/$name")
+          done < <(find "${BIN_PATH}" -type d -name "*.xctest" -print)
+
+          if [[ ${#TEST_BINS[@]} -eq 0 ]]; then
+            echo "No test binaries found in ${BIN_PATH}" >&2
+            exit 1
+          fi
+
+          # Human-readable summary
+          xcrun llvm-cov report \
+            -instr-profile "${PROF_DATA}" \
+            "${TEST_BINS[@]}" | sed -E 's/\x1b\[[0-9;]*m//g' > coverage-summary.txt
+
+          # HTML report
+          mkdir -p "${COVERAGE_HTML_DIR}"
+          xcrun llvm-cov show \
+            -format=html \
+            -instr-profile "${PROF_DATA}" \
+            -ignore-filename-regex '\\.(build|Build)|Tests' \
+            "${TEST_BINS[@]}" \
+            -output-dir "${COVERAGE_HTML_DIR}"
+
+      - name: Upload HTML coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-html
+          path: ${{ env.COVERAGE_HTML_DIR }}/
+
+      - name: Print coverage summary
+        if: always()
+        run: |
+          echo "=== llvm-cov summary ==="
+          cat coverage-summary.txt || true
