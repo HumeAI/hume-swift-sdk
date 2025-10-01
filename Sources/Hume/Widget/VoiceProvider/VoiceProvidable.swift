@@ -18,6 +18,12 @@
     /// Connects the VoiceProvider to the backend and prepares audio streaming.
     /// - Throws: `VoiceProviderError` for connection, configuration, or audio errors.
     @MainActor func connect(
+      with options: ChatConnectOptions?,
+      sessionSettings: SessionSettings
+    ) async throws
+    /// Connects the VoiceProvider to the backend and prepares audio streaming.
+    /// - Throws: `VoiceProviderError` for connection, configuration, or audio errors.
+    @MainActor func connect(
       configId: String?, configVersion: String?, resumedChatGroupId: String?,
       sessionSettings: SessionSettings) async throws
     /// Disconnects the VoiceProvider and stops audio streaming.
