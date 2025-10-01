@@ -4,14 +4,14 @@ public struct PostedUtterance: Codable, Hashable {
   public let speed: Double?
   public let text: String
   public let trailingSilence: Double?
-  public let voice: TtsVoiceRef?
+  public let voice: PostedUtteranceVoice?
 
   public init(
     description: String?,
     speed: Double?,
     trailingSilence: Double?,
     text: String,
-    voice: TtsVoiceRef?
+    voice: PostedUtteranceVoice?
   ) {
     self.description = description
     self.speed = speed

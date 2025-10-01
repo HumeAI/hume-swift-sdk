@@ -6,7 +6,7 @@ public struct SnippetAudioChunk: Codable, Hashable {
   public let generationId: String
   public let isLastChunk: Bool
   public let requestId: String
-  public let snippet: Snippet?
+  public let snippet: SnippetInput?
   public let snippetId: String
   public let text: String
   public let transcribedText: String?

@@ -11,7 +11,8 @@ extension SessionSettings {
     languageModelApiKey: String? = nil,
     systemPrompt: String? = nil,
     tools: [Tool]? = nil,
-    variables: [String: String]? = nil
+    variables: [String: String]? = nil,
+    voiceId: String? = nil
   ) -> SessionSettings {
     SessionSettings(
       audio: audio ?? self.audio,
@@ -21,7 +22,8 @@ extension SessionSettings {
       languageModelApiKey: languageModelApiKey ?? self.languageModelApiKey,
       systemPrompt: systemPrompt ?? self.systemPrompt,
       tools: tools ?? self.tools,
-      variables: variables ?? self.variables
+      variables: variables ?? self.variables,
+      voiceId: voiceId ?? self.voiceId
     )
   }
 }

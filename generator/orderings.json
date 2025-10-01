@@ -20,6 +20,10 @@
   "HttpValidationError.init": [
     "detail"
   ],
+  "MillisecondInterval.init": [
+    "begin",
+    "end"
+  ],
   "FormatMp3.init": [],
   "PostedTts.init": [
     "context",
@@ -28,19 +32,37 @@
     "splitUtterances",
     "stripHeaders",
     "utterances",
-    "instantMode"
+    "instantMode",
+    "includeTimestampTypes",
+    "version"
+  ],
+  "TimestampMessage.init": [
+    "generationId",
+    "requestId",
+    "snippetId",
+    "timestamp"
   ],
   "ReturnTts.init": [
     "generations",
     "requestId"
   ],
   "FormatPcm.init": [],
+  "SnippetInput.init": [
+    "audioFormat",
+    "generationId",
+    "id",
+    "text",
+    "timestamps",
+    "transcribedText",
+    "utteranceIndex"
+  ],
   "Snippet.init": [
     "id",
     "text",
     "generationId",
     "utteranceIndex",
     "transcribedText",
+    "timestamps",
     "audio"
   ],
   "SnippetAudioChunk.init": [
@@ -53,7 +75,13 @@
     "audioFormat",
     "isLastChunk",
     "utteranceIndex",
-    "snippet"
+    "snippet",
+    "requestId"
+  ],
+  "Timestamp.init": [
+    "text",
+    "time",
+    "type"
   ],
   "PostedUtterance.init": [
     "description",
@@ -75,9 +103,24 @@
     "provider"
   ],
   "FormatWav.init": [],
+  "AssistantEnd.init": [
+    "customSessionId"
+  ],
   "AssistantInput.init": [
     "customSessionId",
     "text"
+  ],
+  "AssistantMessage.init": [
+    "customSessionId",
+    "fromText",
+    "id",
+    "message",
+    "models"
+  ],
+  "AssistantProsody.init": [
+    "customSessionId",
+    "id",
+    "models"
   ],
   "AudioConfiguration.init": [
     "channels",
@@ -88,16 +131,47 @@
     "customSessionId",
     "data"
   ],
+  "AudioOutput.init": [
+    "customSessionId",
+    "data",
+    "id",
+    "index"
+  ],
   "BuiltinToolConfig.init": [
     "fallbackContent",
     "name"
+  ],
+  "ChatMessage.init": [
+    "content",
+    "role",
+    "toolCall",
+    "toolResult"
+  ],
+  "ChatMetadata.init": [
+    "chatGroupId",
+    "chatId",
+    "customSessionId",
+    "requestId"
   ],
   "Context.init": [
     "text",
     "type"
   ],
+  "WebSocketError.init": [
+    "code",
+    "customSessionId",
+    "message",
+    "requestId",
+    "slug"
+  ],
+  "Inference.init": [
+    "prosody"
+  ],
   "PauseAssistantMessage.init": [
     "customSessionId"
+  ],
+  "ProsodyInference.init": [
+    "scores"
   ],
   "ResumeAssistantMessage.init": [
     "customSessionId"
@@ -110,7 +184,8 @@
     "languageModelApiKey",
     "systemPrompt",
     "tools",
-    "variables"
+    "variables",
+    "voiceId"
   ],
   "Tool.init": [
     "description",
@@ -118,6 +193,14 @@
     "name",
     "parameters",
     "type"
+  ],
+  "ToolCallMessage.init": [
+    "name",
+    "parameters",
+    "toolCallId",
+    "customSessionId",
+    "toolType",
+    "responseRequired"
   ],
   "ToolErrorMessage.init": [
     "code",
@@ -138,64 +221,6 @@
   "UserInput.init": [
     "customSessionId",
     "text"
-  ],
-  "AssistantEnd.init": [
-    "customSessionId"
-  ],
-  "AssistantMessage.init": [
-    "customSessionId",
-    "fromText",
-    "id",
-    "message",
-    "models"
-  ],
-  "AssistantProsody.init": [
-    "customSessionId",
-    "id",
-    "models"
-  ],
-  "AudioOutput.init": [
-    "customSessionId",
-    "data",
-    "id",
-    "index"
-  ],
-  "ChatMessage.init": [
-    "content",
-    "role",
-    "toolCall",
-    "toolResult"
-  ],
-  "ChatMetadata.init": [
-    "chatGroupId",
-    "chatId",
-    "customSessionId",
-    "requestId"
-  ],
-  "WebSocketError.init": [
-    "code",
-    "customSessionId",
-    "message",
-    "requestId",
-    "slug"
-  ],
-  "Inference.init": [
-    "prosody"
-  ],
-  "MillisecondInterval.init": [
-    "begin",
-    "end"
-  ],
-  "ProsodyInference.init": [
-    "scores"
-  ],
-  "ToolCallMessage.init": [
-    "name",
-    "parameters",
-    "toolCallId",
-    "customSessionId",
-    "toolType",
-    "responseRequired"
   ],
   "UserInterruption.init": [
     "customSessionId",

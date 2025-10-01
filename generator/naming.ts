@@ -56,6 +56,11 @@ export const swiftName = (schema: JsonSchema, surroundingName?: string): string 
     throw new Error(`Cannot determine name from schema: ${JSON.stringify(schema)} beneath ${surroundingName}`);
   }
 
+  // Check for schemaKey-based renames first (for within-namespace conflicts)
+  if ("schemaKey" in schema && schema.schemaKey && schemaKeyRenames[schema.schemaKey]) {
+    return schemaKeyRenames[schema.schemaKey];
+  }
+
   if (schema.kind === "enum") {
     return schema["x-fern-type-name"] ??
       schema.title ??
@@ -98,7 +103,7 @@ export const swiftName = (schema: JsonSchema, surroundingName?: string): string 
 
   if (schema.kind === "anyOfRefs") {
     return normalizeObjectName(
-      schema.schemaKey ?? surroundingName ?? fail(),
+      schema["x-fern-type-name"] ?? schema.schemaKey ?? surroundingName ?? fail(),
     );
   }
 
@@ -122,7 +127,7 @@ export const getResourceName = ({ operation, path }: Endpoint) => {
   throw new Error(`Unable to determine SDK group of operation ${path}`);
 };
 
-// Define a list of type names that need to be renamed due to collisions
+// Define a list of type names that need to be renamed due to cross-namespace collisions
 // Each entry maps from original name to a Record of namespace to renamed name
 const typeRenames: Record<string, Record<string, string>> = {
   Encoding: {
@@ -134,6 +139,14 @@ const typeRenames: Record<string, Record<string, string>> = {
   Voice: {
     tts: "Voice",
   },
+};
+
+// Define resolutions for within-namespace name conflicts
+// Maps from "namespace:schemaKey" to the Swift type name to use
+// Use this when multiple schemas in the same namespace want the same name
+const schemaKeyRenames: Record<string, string> = {
+  "tts:Snippet-Input": "SnippetInput",
+  "tts:Snippet-Output": "Snippet",
 };
 
 // Apply renames to a definition name based on the namespace
