@@ -956,12 +956,7 @@ const buildSwiftSdk = (specs: OA.KnownSpecs): SwiftSDK => {
       const isSameNamespace = existingNamespace === namespaceStr;
       const errorMessage = isSameNamespace
         ? `Type name collision detected: "${def.name}" exists multiple times in namespace "${namespaceStr}" with different definitions.\n` +
-          `This is a within-namespace conflict. Please add entries to schemaKeyRenames in naming.ts.\n` +
-          `Example:\n` +
-          `  "schemaKeyRenames": {\n` +
-          `    "${namespaceStr}:SchemaKey1": "${def.name}Input",\n` +
-          `    "${namespaceStr}:SchemaKey2": "${def.name}Output",\n` +
-          `  }`
+          `This is a within-namespace conflict. Please add an entry to typeRenames in naming.ts to resolve it.`
         : `Type name collision detected: "${def.name}" exists in namespaces "${existingNamespace}" and "${namespaceStr}" with different definitions.\n` +
           `This is a cross-namespace conflict. Please add an entry to typeRenames in naming.ts.\n` +
           `Example:\n` +

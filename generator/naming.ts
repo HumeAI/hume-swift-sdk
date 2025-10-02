@@ -56,11 +56,6 @@ export const swiftName = (schema: JsonSchema, surroundingName?: string): string 
     throw new Error(`Cannot determine name from schema: ${JSON.stringify(schema)} beneath ${surroundingName}`);
   }
 
-  // Check for schemaKey-based renames first (for within-namespace conflicts)
-  if ("schemaKey" in schema && schema.schemaKey && schemaKeyRenames[schema.schemaKey]) {
-    return schemaKeyRenames[schema.schemaKey];
-  }
-
   if (schema.kind === "enum") {
     return schema["x-fern-type-name"] ??
       schema.title ??
@@ -146,13 +141,6 @@ const typeRenames: Record<string, Record<string, string>> = {
   PostedContext: {
     tts: "PostedTtsContext",
   },
-};
-
-// Define resolutions for within-namespace name conflicts
-// Maps from "namespace:schemaKey" to the Swift type name to use
-// Use this when multiple schemas in the same namespace want the same name
-const schemaKeyRenames: Record<string, string> = {
-  // Add entries here when schemas in the same namespace have conflicting names
 };
 
 // Apply renames to a definition name based on the namespace
