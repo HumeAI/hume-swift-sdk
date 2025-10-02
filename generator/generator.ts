@@ -1136,8 +1136,11 @@ const buildSwiftSdk = (specs: OA.KnownSpecs): SwiftSDK => {
   // We now walk through all the schemas and add them to the SDK as definitions.
   // We also add any special cases (like EmotionScores) as definitions.
 
-      
-  
+  // Schemas to skip during generation (by schemaKey)
+  const ignoredSchemas = new Set([
+    "tts:Snippet-Input", // Only used for metadata in streaming responses, Snippet-Output is the main type
+  ]);
+
   Object.entries(allSchemas).sort(([a], [b]) => a.localeCompare(b)).forEach(([name, schema]) => {
     if (schema.kind === "ignored") {
       return;
@@ -1145,8 +1148,12 @@ const buildSwiftSdk = (specs: OA.KnownSpecs): SwiftSDK => {
 
     const schemaKey = (schema as any).schemaKey;
 
-    // StringNumberBool is now handled directly as String for simplicity
+    // Skip schemas in the ignored list
+    if (schemaKey && ignoredSchemas.has(schemaKey)) {
+      return;
+    }
 
+    // StringNumberBool is now handled directly as String for simplicity
 
 
     // Skip schemas without schemaKey (these are typically internal schemas not meant for generation)

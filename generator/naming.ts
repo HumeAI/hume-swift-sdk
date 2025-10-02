@@ -145,8 +145,7 @@ const typeRenames: Record<string, Record<string, string>> = {
 // Maps from "namespace:schemaKey" to the Swift type name to use
 // Use this when multiple schemas in the same namespace want the same name
 const schemaKeyRenames: Record<string, string> = {
-  "tts:Snippet-Input": "SnippetInput",
-  "tts:Snippet-Output": "Snippet",
+  // Add entries here when schemas in the same namespace have conflicting names
 };
 
 // Apply renames to a definition name based on the namespace
