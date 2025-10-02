@@ -36,7 +36,7 @@
     // MARK: - Methods
     @MainActor
     public func connect(
-      configId: String?, configVersion: String?, resumedChatGroupId: String?,
+      with options: ChatConnectOptions?,
       sessionSettings: SessionSettings
     ) async throws {
       guard !shouldFailConnection else {
@@ -47,6 +47,20 @@
       stateSubject.send(.connected)
       isConnected = true
       startSimulatingEvents()
+    }
+
+    @MainActor
+    public func connect(
+      configId: String?, configVersion: String?, resumedChatGroupId: String?,
+      sessionSettings: SessionSettings
+    ) async throws {
+      try await connect(
+        with:
+          ChatConnectOptions(
+            configId: configId,
+            configVersion: configVersion,
+            resumedChatGroupId: resumedChatGroupId),
+        sessionSettings: sessionSettings)
     }
 
     @MainActor
