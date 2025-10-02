@@ -139,6 +139,13 @@ const typeRenames: Record<string, Record<string, string>> = {
   Voice: {
     tts: "Voice",
   },
+  // Temporary renames to avoid breaking changes
+  PostedUtteranceVoice: {
+    tts: "TtsVoiceRef",
+  },
+  PostedContext: {
+    tts: "PostedTtsContext",
+  },
 };
 
 // Define resolutions for within-namespace name conflicts
