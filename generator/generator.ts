@@ -82,7 +82,7 @@ const applyEmotionScoresSpecialCase = (
 
   if (schema.kind === "object" && schema.properties) {
     // Convert property names from the API spec to camelCase Swift property names
-    Object.entries(schema.properties).forEach(([keyName, _propSchema]) => {
+    Object.entries(schema.properties).sort(([a], [b]) => a.localeCompare(b)).forEach(([keyName, _propSchema]) => {
       // Convert key name to camelCase property name
       let propertyName = keyName
         .toLowerCase()
@@ -236,7 +236,7 @@ const parseDiscriminatedUnionFromAnyOfRefs = (
 
   const structVariantsByName: Record<string, SwiftStruct> = {};
 
-  for (const [name, def] of Object.entries(variantDefsByName)) {
+  for (const [name, def] of Object.entries(variantDefsByName).sort(([a], [b]) => a.localeCompare(b))) {
     if (def.type === "struct") {
       structVariantsByName[name] = def;
     } else {
@@ -263,7 +263,7 @@ const parseDiscriminatedUnionFromAnyOfRefs = (
   if (names.length !== 1) {
     return null;
   }
-  const cases = Object.entries(variantDefsByName).map(
+  const cases = Object.entries(variantDefsByName).sort(([a], [b]) => a.localeCompare(b)).map(
     ([name, def]): SwiftDiscriminatedUnion["cases"][number] => ({
       type: {
         type: "Reference",
@@ -424,7 +424,7 @@ const schemaToSwiftType = (
         }> = [];
 
         // Create cases for each variant
-        for (const [name, def] of Object.entries(variantDefsByName)) {
+        for (const [name, def] of Object.entries(variantDefsByName).sort(([a], [b]) => a.localeCompare(b))) {
           if (def.type === "struct") {
             cases.push({
               caseName: name,
@@ -522,7 +522,7 @@ const schemaToSwiftType = (
 
         // Try to find the mapping key that corresponds to this option
         // The discriminator mapping is { discriminatorValue: schemaReference }
-        const mappingEntries = Object.entries(discriminatorMapping);
+        const mappingEntries = Object.entries(discriminatorMapping).sort(([a], [b]) => a.localeCompare(b));
         const mappingEntry = mappingEntries[i];
 
         if (mappingEntry) {
@@ -652,6 +652,7 @@ const schemaToSwiftType = (
         constValue?: string;
         isCommentedOut?: boolean;
       }> = Object.entries(schema.properties)
+        .sort(([a], [b]) => a.localeCompare(b))
         .map(
           ([propName, prop]): {
             name: string;
@@ -944,10 +945,10 @@ const buildSwiftSdk = (specs: OA.KnownSpecs): SwiftSDK => {
 
   const allEndpoints: Array<Endpoint> = [specs.tts]
     .flatMap((api) => {
-      const pathEntries = Object.entries(api.paths);
+      const pathEntries = Object.entries(api.paths).sort(([a], [b]) => a.localeCompare(b));
       return pathEntries.flatMap(
         ([path, operations]: [string, Record<Verb, OA.OpenAPIOperation>]) =>
-          Object.entries(operations).map(([verb, operation]) => ({
+          Object.entries(operations).sort(([a], [b]) => a.localeCompare(b)).map(([verb, operation]) => ({
             path,
             verb: verb as Verb,
             operation,
@@ -974,19 +975,19 @@ const buildSwiftSdk = (specs: OA.KnownSpecs): SwiftSDK => {
 
   // Add TTS schemas with tts: prefix
 
-  for (const [key, schema] of Object.entries(specs.tts.components.schemas)) {
+  for (const [key, schema] of Object.entries(specs.tts.components.schemas).sort(([a], [b]) => a.localeCompare(b))) {
     const prefixedKey = `tts:${key}`;
     allSchemas[prefixedKey] = schema;
     // Update the schemaKey to maintain traceability
     (schema as any).schemaKey = prefixedKey;
-    
+
 
   }
 
   // Add EVI AsyncAPI schemas with evi: prefix
   for (const [key, schema] of Object.entries(
     specs.eviAsync.components.schemas,
-  )) {
+  ).sort(([a], [b]) => a.localeCompare(b))) {
     const prefixedKey = `evi:${key}`;
     allSchemas[prefixedKey] = schema;
     // Update the schemaKey to maintain traceability
@@ -1009,7 +1010,7 @@ const buildSwiftSdk = (specs: OA.KnownSpecs): SwiftSDK => {
     return null;
   };
 
-  const methodsByResourceName = Object.entries(collectedByResourceName).map(
+  const methodsByResourceName = Object.entries(collectedByResourceName).sort(([a], [b]) => a.localeCompare(b)).map(
     ([resourceName, endpoints]) => {
       if (endpoints.length === 0) {
         throw new Error(`No endpoints for resource ${resourceName}`);
@@ -1078,7 +1079,7 @@ const buildSwiftSdk = (specs: OA.KnownSpecs): SwiftSDK => {
 
       
   
-  Object.entries(allSchemas).forEach(([name, schema]) => {
+  Object.entries(allSchemas).sort(([a], [b]) => a.localeCompare(b)).forEach(([name, schema]) => {
     if (schema.kind === "ignored") {
       return;
     }
@@ -1218,7 +1219,7 @@ const writeSwiftSdk = async (sdk: SwiftSDK, renderer: SwiftRenderer, basePath: s
   const files: File[] = [];
 
   // Write namespace clients
-  Object.entries(sdk.namespaces).forEach(
+  Object.entries(sdk.namespaces).sort(([a], [b]) => a.localeCompare(b)).forEach(
     ([namespaceName, namespace]: [string, any]) => {
       if (namespace.resourceClients.length > 0) {
         files.push(

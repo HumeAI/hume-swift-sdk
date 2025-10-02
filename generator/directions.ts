@@ -59,7 +59,7 @@ const buildReferenceGraph = (
 ): Map<string, Set<string>> => {
   const graph = new Map<string, Set<string>>();
 
-  for (const [key, schema] of Object.entries(allSchemas)) {
+  for (const [key, schema] of Object.entries(allSchemas).sort(([a], [b]) => a.localeCompare(b))) {
     const refs = new Set<string>();
 
     // Determine the namespace from the key
@@ -263,7 +263,7 @@ export const calculateSchemaDirections = (
   );
 
   // Set "orphaned" for any schemas that weren't reached
-  for (const schemaKey of Object.keys(allSchemas)) {
+  for (const schemaKey of Object.keys(allSchemas).sort((a, b) => a.localeCompare(b))) {
     if (!propagatedDirections.has(schemaKey)) {
       propagatedDirections.set(schemaKey, "orphaned");
     }
