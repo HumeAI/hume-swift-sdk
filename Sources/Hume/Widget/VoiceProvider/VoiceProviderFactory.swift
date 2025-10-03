@@ -5,6 +5,7 @@
 //  Created by Chris on 9/10/25.
 //
 
+#if HUME_IOS
 import Foundation
 
 public class VoiceProviderFactory {
@@ -21,3 +22,4 @@ public class VoiceProviderFactory {
     return Self.voiceProvider!
   }
 }
+#endif

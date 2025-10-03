@@ -98,7 +98,7 @@ export const swiftName = (schema: JsonSchema, surroundingName?: string): string 
 
   if (schema.kind === "anyOfRefs") {
     return normalizeObjectName(
-      schema.schemaKey ?? surroundingName ?? fail(),
+      schema["x-fern-type-name"] ?? schema.schemaKey ?? surroundingName ?? fail(),
     );
   }
 
@@ -122,7 +122,7 @@ export const getResourceName = ({ operation, path }: Endpoint) => {
   throw new Error(`Unable to determine SDK group of operation ${path}`);
 };
 
-// Define a list of type names that need to be renamed due to collisions
+// Define a list of type names that need to be renamed due to cross-namespace collisions
 // Each entry maps from original name to a Record of namespace to renamed name
 const typeRenames: Record<string, Record<string, string>> = {
   Encoding: {
@@ -133,6 +133,13 @@ const typeRenames: Record<string, Record<string, string>> = {
   },
   Voice: {
     tts: "Voice",
+  },
+  // Temporary renames to avoid breaking changes
+  PostedUtteranceVoice: {
+    tts: "TtsVoiceRef",
+  },
+  PostedContext: {
+    tts: "PostedTtsContext",
   },
 };
 

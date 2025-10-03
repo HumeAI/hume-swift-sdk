@@ -119,6 +119,7 @@ export type SDKMethod = {
   path: string;
   parameters: Array<SDKMethodParam>;
   returnType: SwiftType;
+  inlineResponseDefs?: Record<string, SwiftDefinition>;
 };
 
 export type File = {

@@ -843,10 +843,11 @@ const openapiOperationToSDKMethod = (
     maybeSchemaOfStatus("204");
 
   let returnType: SwiftType;
+  let inlineResponseDefs: Record<string, SwiftDefinition> = {};
   if (isBinaryResponse("200") || isBinaryResponse("201")) {
     returnType = { type: "Data" };
   } else {
-    const { expr } = successResponseSchema
+    const { expr, defs } = successResponseSchema
       ? schemaToSwiftType(
         successResponseSchema,
         lookupSchema,
@@ -854,8 +855,9 @@ const openapiOperationToSDKMethod = (
         "received",
         namespace,
       )
-      : { expr: { type: "void" as const } };
+      : { expr: { type: "void" as const }, defs: {} };
     returnType = expr;
+    inlineResponseDefs = defs;
   }
 
   return {
@@ -864,6 +866,7 @@ const openapiOperationToSDKMethod = (
     verb,
     parameters: sdkParameters,
     returnType,
+    inlineResponseDefs,
   };
 };
 
@@ -920,12 +923,55 @@ const buildSwiftSdk = (specs: OA.KnownSpecs): SwiftSDK => {
     });
   };
 
+  // Helper to check if two definitions are structurally identical
+  const areDefinitionsIdentical = (def1: SwiftDefinition, def2: SwiftDefinition): boolean => {
+    // Simple JSON comparison - good enough for detecting structural equality
+    return JSON.stringify(def1) === JSON.stringify(def2);
+  };
+
   // Helper to add "definitions" which are Swift structs and enums that represent structures
   // used in requests, responses, and Websocket messages.
   const addDefinition = (namespace: Namespace, def: SwiftDefinition) => {
     ensureNamespace(namespace);
     const namespaceStr =
       namespace === "empathicVoice" ? "empathicVoice" : "tts";
+
+    // Check if a definition with the same name already exists in ANY namespace
+    const existingDef = Object.values(sdk.namespaces)
+      .flatMap((ns) => ns.definitions)
+      .find((d) => d.name === def.name);
+
+    if (existingDef) {
+      // If they're structurally identical, skip adding duplicate
+      if (areDefinitionsIdentical(existingDef, def)) {
+        return;
+      }
+
+      // Find which namespace the existing def is in
+      const existingNamespace = Object.entries(sdk.namespaces).find(([_, ns]) =>
+        ns.definitions.includes(existingDef)
+      )?.[0];
+
+      // If they're different, throw an error requiring manual resolution
+      const isSameNamespace = existingNamespace === namespaceStr;
+      const errorMessage = isSameNamespace
+        ? `Type name collision detected: "${def.name}" exists multiple times in namespace "${namespaceStr}" with different definitions.\n` +
+          `This is a within-namespace conflict. Please add an entry to typeRenames in naming.ts to resolve it.`
+        : `Type name collision detected: "${def.name}" exists in namespaces "${existingNamespace}" and "${namespaceStr}" with different definitions.\n` +
+          `This is a cross-namespace conflict. Please add an entry to typeRenames in naming.ts.\n` +
+          `Example:\n` +
+          `  ${def.name}: {\n` +
+          `    tts: "Tts${def.name}",\n` +
+          `    empathicVoice: "Evi${def.name}",\n` +
+          `  }`;
+
+      throw new Error(
+        errorMessage +
+        `\n\nExisting definition: ${JSON.stringify(existingDef, null, 2)}\n` +
+        `New definition: ${JSON.stringify(def, null, 2)}`
+      );
+    }
+
     // Prevent adding a struct if a typeAlias with the same name already exists
     if (def.type === "struct") {
       const hasTypeAlias = sdk.namespaces[namespaceStr].definitions.some(
@@ -1038,6 +1084,14 @@ const buildSwiftSdk = (specs: OA.KnownSpecs): SwiftSDK => {
   methodsByResourceName.forEach(
     ({ namespace, resourceName: groupName, methods }) => {
       addResourceClient(namespace, groupName, methods);
+      // Extract inline response definitions from methods
+      methods.forEach((method) => {
+        if (method.inlineResponseDefs) {
+          Object.values(method.inlineResponseDefs).forEach((def) => {
+            addDefinition(namespace, def);
+          });
+        }
+      });
     },
   );
 
@@ -1077,8 +1131,11 @@ const buildSwiftSdk = (specs: OA.KnownSpecs): SwiftSDK => {
   // We now walk through all the schemas and add them to the SDK as definitions.
   // We also add any special cases (like EmotionScores) as definitions.
 
-      
-  
+  // Schemas to skip during generation (by schemaKey)
+  const ignoredSchemas = new Set([
+    "tts:Snippet-Input", // Only used for metadata in streaming responses, Snippet-Output is the main type
+  ]);
+
   Object.entries(allSchemas).sort(([a], [b]) => a.localeCompare(b)).forEach(([name, schema]) => {
     if (schema.kind === "ignored") {
       return;
@@ -1086,8 +1143,12 @@ const buildSwiftSdk = (specs: OA.KnownSpecs): SwiftSDK => {
 
     const schemaKey = (schema as any).schemaKey;
 
-    // StringNumberBool is now handled directly as String for simplicity
+    // Skip schemas in the ignored list
+    if (schemaKey && ignoredSchemas.has(schemaKey)) {
+      return;
+    }
 
+    // StringNumberBool is now handled directly as String for simplicity
 
 
     // Skip schemas without schemaKey (these are typically internal schemas not meant for generation)
