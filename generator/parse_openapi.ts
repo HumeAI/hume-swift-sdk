@@ -120,6 +120,7 @@ const RawJsonSchema = z.lazy((): any =>
         z.number(),
         z.boolean(),
         z.null(),
+        z.array(z.unknown()),
         z.record(z.string(), z.unknown()),
       ])
       .nullable()
@@ -151,6 +152,7 @@ export type JsonSchema =
     kind: "anyOfRefs";
     anyOf: Array<JsonSchema>;
     schemaKey?: string;
+    "x-fern-type-name"?: string;
   }
   | {
     kind: "ref";
@@ -289,6 +291,7 @@ export const JsonSchema_ = z.discriminatedUnion("kind", [
     kind: z.literal("anyOfRefs"),
     anyOf: z.array(JS),
     schemaKey: z.string().optional(),
+    "x-fern-type-name": z.string().optional(),
   }),
   z.object({
     kind: z.literal("empty"),
@@ -1135,7 +1138,7 @@ export const readKnownSpecs = async (
     try {
       ttsOpenApiResult = await RawOpenAPISpec_.safeParseAsync(ttsOpenApiRaw);
       if (!ttsOpenApiResult.success) {
-        throw new Error("Failed to parse TTS OpenAPI spec");
+        throw new Error("Failed to parse TTS OpenAPI spec: " + JSON.stringify(ttsOpenApiResult.error) );
       }
     } catch (e) {
       throw e;
