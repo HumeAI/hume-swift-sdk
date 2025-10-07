@@ -36,19 +36,6 @@ public class TTS {
     )
   }
 
-  public func synthesizeJsonStreaming(
-    request: PostedTts,
-    timeoutDuration: TimeInterval = 300,
-    maxRetries: Int = 0
-  ) -> AsyncThrowingStream<SnippetAudioChunk, Error> {
-    return networkClient.stream(
-      Endpoint.synthesizeJsonStream(
-        request: request,
-        timeoutDuration: timeoutDuration,
-        maxRetries: maxRetries)
-    )
-  }
-
   public func synthesizeFileStreaming(
     request: PostedTts,
     timeoutDuration: TimeInterval = 300,
@@ -56,6 +43,19 @@ public class TTS {
   ) -> AsyncThrowingStream<Data, Error> {
     return networkClient.stream(
       Endpoint.synthesizeFileStream(
+        request: request,
+        timeoutDuration: timeoutDuration,
+        maxRetries: maxRetries)
+    )
+  }
+
+  public func synthesizeJsonStreaming(
+    request: PostedTts,
+    timeoutDuration: TimeInterval = 300,
+    maxRetries: Int = 0
+  ) -> AsyncThrowingStream<SnippetAudioChunk, Error> {
+    return networkClient.stream(
+      Endpoint.synthesizeJsonStream(
         request: request,
         timeoutDuration: timeoutDuration,
         maxRetries: maxRetries)
@@ -98,14 +98,14 @@ extension Endpoint where Response == Data {
   }
 }
 
-extension Endpoint where Response == SnippetAudioChunk {
-  fileprivate static func synthesizeJsonStream(
+extension Endpoint where Response == Data {
+  fileprivate static func synthesizeFileStream(
     request: PostedTts,
     timeoutDuration: TimeInterval,
     maxRetries: Int
-  ) -> Endpoint<SnippetAudioChunk> {
+  ) -> Endpoint<Data> {
     return Endpoint(
-      path: "/v0/tts/stream/json",
+      path: "/v0/tts/stream/file",
       method: .post,
       headers: ["Content-Type": "application/json"],
       body: request,
@@ -116,14 +116,14 @@ extension Endpoint where Response == SnippetAudioChunk {
   }
 }
 
-extension Endpoint where Response == Data {
-  fileprivate static func synthesizeFileStream(
+extension Endpoint where Response == SnippetAudioChunk {
+  fileprivate static func synthesizeJsonStream(
     request: PostedTts,
     timeoutDuration: TimeInterval,
     maxRetries: Int
-  ) -> Endpoint<Data> {
+  ) -> Endpoint<SnippetAudioChunk> {
     return Endpoint(
-      path: "/v0/tts/stream/file",
+      path: "/v0/tts/stream/json",
       method: .post,
       headers: ["Content-Type": "application/json"],
       body: request,
