@@ -86,7 +86,7 @@ public class StreamSocket {
       assertionFailure("Did not expect to receive message as data")
       throw StreamSocketError.decodingError
 
-    case let .string(text):
+    case .string(let text):
       guard
         let messageData = text.data(using: .utf8)
       else {
