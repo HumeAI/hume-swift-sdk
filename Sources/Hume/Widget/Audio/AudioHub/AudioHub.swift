@@ -24,7 +24,7 @@
 
     // MARK: Microphone
     public private(set) var isRecording: Bool = false
-    private var microphone: Microphone?
+    public var microphone: Microphone?
     private let microphoneQueue = DispatchQueue(label: "\(Constants.Namespace).microphone.queue")
     public var microphoneDataChunkHandler: MicrophoneDataChunkBlock?
 

@@ -22,6 +22,7 @@
 
     weak public var delegate: VoiceProviderDelegate?
     public var isOutputMeteringEnabled: Bool = false
+    public var isInputMeteringEnabled: Bool = false
     private var isConnected: Bool = false
     private var mockEventsTask: Task<Void, Never>?
 
