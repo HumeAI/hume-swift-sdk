@@ -11,7 +11,7 @@
 
   public typealias MicrophoneDataChunkBlock = (Data, Float) async -> Void
 
-  internal final class Microphone: NSObject {
+  public final class Microphone: NSObject {
     private let micConfig: MicConfig
 
     private var audioEngine: AVAudioEngine
@@ -24,6 +24,15 @@
 
     var onChunk: MicrophoneDataChunkBlock = { _, _ in }
     var isMuted: Bool = false
+
+    public var meteringEnabled: Bool {
+      get {
+        audioBufferProcessor.meteringEnabled
+      }
+      set {
+        audioBufferProcessor.meteringEnabled = newValue
+      }
+    }
 
     init(
       audioEngine: AVAudioEngine, sampleRate: Double, sampleSize: Int,
@@ -83,7 +92,7 @@
           inputBufferList: audioBufferList, frameCount: frameCount)
 
         // Pass the converted data to the buffer processor
-        AudioBufferProcessor.process(buffer: outputBuffer, isMuted: isMuted, handler: onChunk)
+        audioBufferProcessor.process(buffer: outputBuffer, isMuted: isMuted, handler: onChunk)
       } catch {
         Logger.error("Resampling failed: \(error.localizedDescription)")
         return kAudioComponentErr_InvalidFormat

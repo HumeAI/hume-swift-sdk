@@ -13,6 +13,7 @@
     var state: AnyPublisher<VoiceProviderState, Never> { get }
     var delegate: VoiceProviderDelegate? { get set }
     var isOutputMeteringEnabled: Bool { get set }
+    var isInputMeteringEnabled: Bool { get set }
     var microphoneMode: MicrophoneMode { get }
 
     /// Connects the VoiceProvider to the backend and prepares audio streaming.

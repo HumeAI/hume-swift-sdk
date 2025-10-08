@@ -34,6 +34,14 @@
       }
     }
 
+    public var isInputMeteringEnabled: Bool = false {
+      didSet {
+        Task {
+          await audioHub.microphone?.meteringEnabled = isInputMeteringEnabled
+        }
+      }
+    }
+
     // MARK: - Microphone
 
     public var microphoneMode: MicrophoneMode {
