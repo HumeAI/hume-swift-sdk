@@ -1,3 +1,4 @@
+#if HUME_IOS
 //
 //  VoiceProviderFactory.swift
 //  Hume
@@ -21,3 +22,4 @@ public class VoiceProviderFactory {
     return Self.voiceProvider!
   }
 }
+#endif
