@@ -134,6 +134,9 @@ const typeRenames: Record<string, Record<string, string>> = {
   Voice: {
     tts: "Voice",
   },
+  MillisecondInterval: {
+    tts: "TTSMillisecondInterval",
+  },
 };
 
 // Apply renames to a definition name based on the namespace
