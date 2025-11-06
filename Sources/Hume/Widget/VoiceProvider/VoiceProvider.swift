@@ -182,6 +182,7 @@
 
       Task {
         do {
+          await audioHub.prepare()
           try await self.audioHub.startMicrophone(handler: handleMicrophoneData)
         } catch {
           Logger.error("failed to start microphone", error)
