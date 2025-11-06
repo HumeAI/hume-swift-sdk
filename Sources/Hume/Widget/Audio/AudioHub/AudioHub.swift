@@ -239,14 +239,17 @@
           audioEngine.detach(node)
         }
 
+        // ensure hardware output paths are realized on the fresh engine before preparing
+        _ = newEngine.outputNode
+        _ = newEngine.mainMixerNode
+
         for (node, fmt) in outputNodes {
           newEngine.attach(node)
           newEngine.connect(node, to: newEngine.mainMixerNode, format: fmt)
         }
 
+        try newEngine.prepare()
         self.audioEngine = newEngine
-        try audioEngine.prepare()
-        //          try audioEngine.start()
       } catch {
         Logger.error("Failed to reset audio session: \(error)")
       }
