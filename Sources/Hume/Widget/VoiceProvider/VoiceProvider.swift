@@ -8,9 +8,10 @@
   /// There should only be one instance of VoiceProvider; acquire an instance from `VoiceProviderFactory`.
   public class VoiceProvider: VoiceProvidable {
     public var state: AnyPublisher<VoiceProviderState, Never> {
-      stateSubject.eraseToAnyPublisher()
+      stateActor.stateSubject.eraseToAnyPublisher()
     }
-    private let stateSubject = CurrentValueSubject<VoiceProviderState, Never>(.disconnected)
+    private let stateActor = VoiceProviderStateActor()
+    private let stateLock = AsyncLock()
 
     private let humeClient: HumeClient
     private var socket: StreamSocket?
@@ -73,21 +74,22 @@
       with options: ChatConnectOptions?,
       sessionSettings: SessionSettings
     ) async throws {
-      assert(stateSubject.value != .connected, "Already connected, please disconnect first")
+      let currentState = await stateActor.getState()
+      assert(currentState != .connected, "Already connected, please disconnect first")
       assert(
-        stateSubject.value != .connecting,
+        currentState != .connecting,
         "Already connecting, wait for connection to finish or disconnect first")
+
+      if currentState == .disconnecting {
+        Logger.debug("was in the middle of disconnecting, waiting to finish...")
+        await stateActor.waitUntil(.disconnected)
+        Logger.debug("...disconnected")
+      }
 
       Logger.info(
         "Connecting voice provider. options: \(String(describing: options))"
       )
-      if stateSubject.value == .disconnecting {
-        // need to wait to finish disconnecting
-        Logger.debug("was in the middle of disconnecting, waiting to finish...")
-        try await stateSubject.waitFor(.disconnected)
-        Logger.debug("...disconnected")
-      }
-      stateSubject.send(.connecting)
+      await stateActor.transition(to: .connecting)
 
       var defaultedSessionSettings: SessionSettings? = nil
       if sessionSettings.audio == nil {
@@ -118,16 +120,18 @@
                     Logger.info("Waiting to receive chat metadata to finalize AudioHub")
                     self.connectionContinuation = continuation
                   } catch {
-                    self.stateSubject.send(.disconnected)
+                    await self.stateActor.transition(to: .disconnected)
                     continuation.resume(throwing: error)
                   }
                 }
               },
               onClose: { [weak self] closeCode, reason in
                 Logger.warn("Socket Closed: \(closeCode). Reason: \(String(describing: reason))")
-                if self?.stateSubject.value == .connected || self?.stateSubject.value == .connecting
-                {
-                  Task { await self?.disconnect() }
+
+                Task {
+                  if [.connected, .connecting].contains(await self?.stateActor.getState()) {
+                    await self?.disconnect()
+                  }
                 }
               },
               onError: { [weak self] error, response in
@@ -141,10 +145,11 @@
                     self.delegate?.voiceProvider(self, didProduceError: .unauthorized)
                   }
                 }
-
-                if self?.stateSubject.value == .connecting {
-                  Logger.warn("aborting connection attempt due to error")
-                  Task { await self?.disconnect() }
+                Task {
+                  if await self?.stateActor.getState() == .connecting {
+                    Logger.warn("aborting connection attempt due to error")
+                    await self?.disconnect()
+                  }
                 }
               }
             )
@@ -171,41 +176,48 @@
       try await connect(with: options, sessionSettings: sessionSettings)
     }
 
-    private func completeConnectionSetup() {
-      guard let connectionContinuation else {
-        Logger.error("missing connection continuation")
-        Task { await self.disconnect() }
+    private func completeConnectionSetup() async {
+      await stateLock.acquire()
+      defer { Task { await stateLock.release() } }
+
+      guard await self.stateActor.getState() == .connecting,
+        let connectionContinuation
+      else {
+        Logger.warn("not in connecting state, aborting connection setup")
         return
       }
 
       Logger.info("Finalizing audio hub configuration")
 
-      Task {
-        do {
-          try await self.audioHub.startMicrophone(handler: handleMicrophoneData)
-        } catch {
-          Logger.error("failed to start microphone", error)
-          connectionContinuation.resume(throwing: error)
-          self.connectionContinuation = nil
-          return
-        }
-        self.stateSubject.send(.connected)
-        self.delegate?.voiceProviderDidConnect(self)
-
-        Logger.info("Voice Provider connected successfully")
-        connectionContinuation.resume()
+      do {
+        try await self.audioHub.startMicrophone(handler: handleMicrophoneData)
+      } catch {
+        Logger.error("failed to start microphone", error)
+        connectionContinuation.resume(throwing: error)
         self.connectionContinuation = nil
+        return
       }
+      await self.stateActor.transition(to: .connected)
+      self.delegate?.voiceProviderDidConnect(self)
 
+      Logger.info("Voice Provider connected successfully")
+      connectionContinuation.resume()
+      self.connectionContinuation = nil
     }
 
     public func disconnect() async {
+      await self.stateLock.acquire()
+      defer { Task { await stateLock.release() } }
+
       Logger.info("attempting to disconnect voice provider")
-      guard [.connected, .connecting].contains(stateSubject.value) else {
+      guard [.connected, .connecting].contains(await stateActor.getState()) else {
         Logger.info("not connected")
         return
       }
-      await MainActor.run { stateSubject.send(.disconnecting) }
+      // make sure to clear continuation to avoid in-flight metadata message while in `.connecting` state
+      connectionContinuation = nil
+      await stateActor.transition(to: .disconnecting)
+
       self.delegate?.voiceProviderWillDisconnect(self)
       Logger.info("Disconnecting voice provider")
 
@@ -215,7 +227,7 @@
       self.socket?.close()
       Logger.info("Voice provider disconnected")
       self.delegate?.voiceProviderDidDisconnect(self)
-      stateSubject.send(.disconnected)
+      await stateActor.transition(to: .disconnected)
     }
 
     // MARK: - Controls
@@ -354,7 +366,7 @@
           """
         )
         Task {
-          completeConnectionSetup()
+          await completeConnectionSetup()
         }
       case .webSocketError(let error):
         if error.slug == "inactivity_timeout" {
@@ -380,7 +392,7 @@
     }
 
     private func handleMicrophoneData(_ data: Data, averagePower: Float) async {
-      guard stateSubject.value == .connected else {
+      guard await stateActor.getState() == .connected else {
         Logger.warn("handleMicData called without being connected")
         return
       }
