@@ -35,4 +35,36 @@ final class SubscribeEventTest: XCTestCase {
     XCTAssertNotNil(message)
   }
 
+  func test_decodesUnknownEventType() throws {
+    let json = """
+      {
+         "type": "new_future_event_type",
+         "some_field": "some_value",
+         "another_field": 123,
+         "nested": {
+           "key": "value"
+         }
+      }
+      """
+
+    let jsonData = json.data(using: .utf8)!
+    decoder.userInfo[.rawJsonData] = jsonData
+
+    let event = try decoder.decode(SubscribeEvent.self, from: jsonData)
+
+    guard case SubscribeEvent.unknown(let typeString, let rawData) = event else {
+      XCTFail("Expected .unknown case, got \(event)")
+      return
+    }
+
+    XCTAssertEqual(typeString, "new_future_event_type")
+    XCTAssertEqual(rawData, jsonData)
+    XCTAssertEqual(event.type, "new_future_event_type")
+
+    let decodedJson = try JSONSerialization.jsonObject(with: rawData) as? [String: Any]
+    XCTAssertNotNil(decodedJson)
+    XCTAssertEqual(decodedJson?["type"] as? String, "new_future_event_type")
+    XCTAssertEqual(decodedJson?["some_field"] as? String, "some_value")
+  }
+
 }

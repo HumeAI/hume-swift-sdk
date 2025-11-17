@@ -7,6 +7,10 @@
 
 import Foundation
 
+extension CodingUserInfoKey {
+  static let rawJsonData = CodingUserInfoKey(rawValue: "rawJsonData")!
+}
+
 public enum SubscribeEvent: Decodable {
   case assistantEnd(AssistantEnd)
   case assistantMessage(AssistantMessage)
@@ -19,6 +23,7 @@ public enum SubscribeEvent: Decodable {
   case toolCallMessage(ToolCallMessage)
   case toolResponseMessage(ToolResponseMessage)
   case toolErrorMessage(ToolErrorMessage)
+  case unknown(String, Data)
 
   private enum CodingKeys: String, CodingKey {
     case type
@@ -37,6 +42,7 @@ public enum SubscribeEvent: Decodable {
     case .toolCallMessage(let msg): msg.type
     case .toolResponseMessage(let msg): msg.type
     case .toolErrorMessage(let msg): msg.type
+    case .unknown(let typeString, _): typeString
     }
   }
 
@@ -69,7 +75,10 @@ public enum SubscribeEvent: Decodable {
     case "tool_error":
       self = .toolErrorMessage(try ToolErrorMessage(from: decoder))
     default:
-      throw HumeError.invalidType(type)
+      Logger.warn("Received unrecognized event type: \(type)")
+      // Get the raw JSON data from decoder's userInfo (set by StreamSocket)
+      let rawData = decoder.userInfo[.rawJsonData] as? Data ?? Data()
+      self = .unknown(type, rawData)
     }
 
   }

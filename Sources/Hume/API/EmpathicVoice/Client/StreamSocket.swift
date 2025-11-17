@@ -93,6 +93,9 @@ public class StreamSocket {
         throw StreamSocketError.decodingError
       }
 
+      // Pass raw JSON data through decoder's userInfo so SubscribeEvent can access it for unknown types
+      decoder.userInfo[.rawJsonData] = messageData
+
       guard let event = try? decoder.decode(SubscribeEvent.self, from: messageData) else {
         throw StreamSocketError.decodingError
       }
