@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
   spec.name         = "Hume"
-  spec.version      = "0.0.1-beta7"
+  spec.version      = "0.0.1-beta8"
   spec.summary      = "Hume AI Swift SDK"
   spec.description  = <<-DESC
                       Integrate Hume APIs directly into your Swift application.
