@@ -80,6 +80,14 @@ public class StreamSocket {
     try await send(UserInput(text: text))
   }
 
+  /**
+     Send tool response message.
+     Tool responses must be sent as JSON text (not binary) for Hume EVI to process them correctly.
+     */
+  public func sendToolResponse(message: ToolResponseMessage) async throws {
+    try await send(message)
+  }
+
   private func receiveSingleMessage() async throws -> SubscribeEvent {
     switch try await webSocketTask.receive() {
     case .data:
