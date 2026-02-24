@@ -15,9 +15,9 @@
       _ voiceProvider: any VoiceProvidable, didProduceError error: VoiceProviderError)
     /// Handler for meter data from the microphone. Note: This is disabled. TODO: make it configurable to set this
     func voiceProvider(
-      _ voiceProvider: any VoiceProvidable, didReceieveAudioInputMeter audioInputMeter: Float)
+      _ voiceProvider: any VoiceProvidable, didReceiveAudioInputMeter audioInputMeter: Float)
     func voiceProvider(
-      _ voiceProvider: any VoiceProvidable, didReceieveAudioOutputMeter audioInputMeter: Float)
+      _ voiceProvider: any VoiceProvidable, didReceiveAudioOutputMeter audioInputMeter: Float)
 
     /// Voice provider is about to disconnect. This is called before the provider is disconnected.
     func voiceProviderWillDisconnect(_ voiceProvider: any VoiceProvidable)
@@ -37,10 +37,10 @@
       _ voiceProvider: any VoiceProvidable, didProduceError error: VoiceProviderError
     ) {}
     public func voiceProvider(
-      _ voiceProvider: any VoiceProvidable, didReceieveAudioInputMeter audioInputMeter: Float
+      _ voiceProvider: any VoiceProvidable, didReceiveAudioInputMeter audioInputMeter: Float
     ) {}
     public func voiceProvider(
-      _ voiceProvider: any VoiceProvidable, didReceieveAudioOutputMeter audioInputMeter: Float
+      _ voiceProvider: any VoiceProvidable, didReceiveAudioOutputMeter audioInputMeter: Float
     ) {}
     public func voiceProviderWillDisconnect(_ voiceProvider: any VoiceProvidable) {}
     public func voiceProviderDidDisconnect(_ voiceProvider: any VoiceProvidable) {}
