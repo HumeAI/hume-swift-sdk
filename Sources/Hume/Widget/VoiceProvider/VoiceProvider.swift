@@ -387,7 +387,7 @@
     // MARK: Handlers
     private func handleOutputMeter(_ meter: Float) {
       self.delegateQueue.async {
-        self.delegate?.voiceProvider(self, didReceieveAudioOutputMeter: meter)
+        self.delegate?.voiceProvider(self, didReceiveAudioOutputMeter: meter)
       }
     }
 
@@ -397,7 +397,7 @@
         return
       }
       do {
-        self.delegate?.voiceProvider(self, didReceieveAudioInputMeter: averagePower)
+        self.delegate?.voiceProvider(self, didReceiveAudioInputMeter: averagePower)
         try await self.socket?.sendData(message: data)
       } catch let error as StreamSocketError {
         // disconnect VoiceProvider if needed
