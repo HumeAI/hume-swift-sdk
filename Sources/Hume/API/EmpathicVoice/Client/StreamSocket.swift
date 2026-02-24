@@ -82,7 +82,7 @@ public class StreamSocket {
 
   /**
      Send tool response message.
-     Tool responses must be sent as JSON text (not binary) for Hume EVI to process them correctly.
+     Tool responses must be sent as JSON text (not binary) for EVI to process them correctly.
      */
   public func sendToolResponse(message: ToolResponseMessage) async throws {
     try await send(message)
