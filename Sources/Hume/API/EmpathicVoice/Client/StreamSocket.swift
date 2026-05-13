@@ -88,6 +88,14 @@ public class StreamSocket {
     try await send(message)
   }
 
+  /**
+     Send tool error message.
+     Tool errors must be sent as JSON text (not binary) for EVI to process them correctly.
+     */
+  public func sendToolError(message: ToolErrorMessage) async throws {
+    try await send(message)
+  }
+
   private func receiveSingleMessage() async throws -> SubscribeEvent {
     switch try await webSocketTask.receive() {
     case .data:
