@@ -260,6 +260,44 @@
     public func sendResumeAssistantMessage(message: ResumeAssistantMessage) async throws {
       try await socket?.resumeAssistant(message: message)
     }
+
+    public func sendToolResponse(
+      toolCallId: String,
+      content: String,
+      customSessionId: String? = nil,
+      toolName: String? = nil,
+      toolType: ToolType? = nil
+    ) async throws {
+      let message = ToolResponseMessage(
+        content: content,
+        customSessionId: customSessionId,
+        toolCallId: toolCallId,
+        toolName: toolName,
+        toolType: toolType
+      )
+      try await socket?.sendToolResponse(message: message)
+    }
+
+    public func sendToolError(
+      toolCallId: String,
+      error: String,
+      code: String? = nil,
+      content: String? = nil,
+      customSessionId: String? = nil,
+      level: ErrorLevel? = nil,
+      toolType: ToolType? = nil
+    ) async throws {
+      let message = ToolErrorMessage(
+        code: code,
+        content: content,
+        customSessionId: customSessionId,
+        error: error,
+        level: level,
+        toolCallId: toolCallId,
+        toolType: toolType
+      )
+      try await socket?.sendToolError(message: message)
+    }
   }
 
   // MARK: - Event Handling
